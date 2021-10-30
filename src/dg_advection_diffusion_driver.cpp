@@ -55,7 +55,7 @@ void Driver_for_DG_approximation(){
 
 		DG_step_by_RK3(tn, delta_t);
 		
-		tn = (k + 1) * delta_t;
+		tn += delta_t;
 
 		// output control
 		if(dg_io::io){
@@ -69,6 +69,7 @@ void Driver_for_DG_approximation(){
 			if((k + 1) % dg_refine::refine_frequency == 0){
 				// hp-adaptive --------------------------------------------
 				Adapt(k);
+				//change timestep here...
 //				LB_efficiency_write(tn);
 				// --------------------------------------------------------
 

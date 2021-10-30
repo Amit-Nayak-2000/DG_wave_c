@@ -8,7 +8,7 @@
 /// @param fileplace The path of mesh file and mesh file name
 /// @param output_place output directory. 
 namespace fileinfo{
-	const std::string fileplace = "../gmsh_files/1024_elements.msh";
+	 std::string fileplace;
 //	const std::string fileplace = "../gmsh_files/strong/1024.msh";
 
 	const std::string output_place = "../outputs/";
@@ -31,18 +31,18 @@ namespace fileinfo{
 /// @param nmax maximum polynomial degree in x and y direction
 /// @param hlevel_max maximum h-refinement level. 
 namespace grid{
-	const int exp_x = 5; 
-	const int exp_y = 5; 
+	int exp_x; 
+	int exp_y; 
 	
-	const double gx_l = 0.0;
-	const double gx_r = 8.0; 
-	const double gy_l = 0.0;
-	const double gy_r = 8.0; 
+	double gx_l;
+	double gx_r; 
+	double gy_l;
+	double gy_r; 
 
-	const int nmin = 6;	
-	const int nmax = 14;
+	int nmin;	
+	int nmax;
 
-	const int hlevel_max = 2;	
+	int hlevel_max;	
 };
 //---------------------------------------------------------------------
 
@@ -55,10 +55,10 @@ namespace grid{
 /// @param nt time step number
 namespace dg_time{
 
-	const double t_total = 1.0e-5 * 5;
+	double t_total;
 //	const double t_total = 0.5;
 
-	const int nt = 5;
+	int nt;
 
 };
 
@@ -70,7 +70,7 @@ namespace dg_fun{
 
 	const int num_of_equation = 3;
 
-	const double C = 1.0;
+	double C;
 //	const double C =  1.0 / (4.0 * std::atan(1.0));
 };
 
@@ -84,17 +84,17 @@ namespace dg_fun{
 /// @param load_balaning Repartitioning switch. 
 namespace dg_refine{
 
-	const bool adapt = true;
+	bool adapt;
 
-	const int refine_frequency = 1;	// every time step refine once
+	int refine_frequency;	// every time step refine once
 
-	const int fit_point_num = 4;
+	int fit_point_num;
 
-	const double tolerance_min = 1.0e-6;
+	double tolerance_min;
 
-	const double tolerance_max = 1.0e-14;
+	double tolerance_max;
 
-	const bool load_balancing = true;
+	bool load_balancing;
 
 };
 

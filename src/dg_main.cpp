@@ -28,10 +28,13 @@
 #include <cstdlib>      // random numbe
 #include "dg_cross_section.h"
 #include "dg_total_element_num.h"
+#include "dg_read_params.h"
 //#include "dg_test.h"	//test
 
 
 int main(int argc, char *argv[]){
+
+	initializeParameters();
 
 	// initialize mpi
 	Start_mpi(argc, argv);

@@ -6,11 +6,12 @@
 
 // user defined variable-------------------------------
 namespace user{
-	extern const double kx; 
-	extern const double ky; 
-	extern const double D;
-	extern const double xx0;
-	extern const double yy0; 
+	extern  double kx; 
+	extern  double ky; 
+	extern  double D;
+	extern  double xx0;
+	extern  double yy0; 
+	extern int BC;
 	
 	extern const double pi;	// testing
 };
