@@ -2,6 +2,7 @@
 #include "dg_almost_equal.h"
 
 void BaryWeights(std::vector<double> x, std::vector<double> &w){
+    int N = x.size();
     for(int j = 0; j <= N; j++){
         w[j] = 1;
     }
@@ -25,7 +26,7 @@ double LagrangeInterp(double x, std::vector<double> xj, std::vector<double> fj, 
     double t;
 
     for(int j = 0; j <= xj.size(); j++){
-        if(AlmostEqual(x, xj[j]){
+        if(AlmostEqual(x, xj[j])){
             return fj[j];
         }
 
@@ -60,7 +61,7 @@ double lagrangeInterpDeriv(double x, std::vector<double> xj, std::vector<double>
     if(atNode){
         for(int j = 0; j <= xj.size(); j++){
             if(j != i){
-                numerator = numerator + wj[j]*(p-fj[f])/(x-xj[j]);
+                numerator = numerator + wj[j]*(p-fj[j])/(x-xj[j]);
             }
         }
     }

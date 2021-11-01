@@ -2,7 +2,7 @@
 #include "dg_polynomial_interpolants.h"
 
 
-CurveInterpolant::CurveInterpolant(int N, std::vector<double> nodesparam, std::vector<double> xparam, std::vector<double> ypara){
+CurveInterpolant::CurveInterpolant(int N, std::vector<double> nodesparam, std::vector<double> xparam, std::vector<double> yparam){
     this->N = N;
     for(int i = 0; i <= N; i++){
         nodes.push_back(nodesparam[i]);
