@@ -40,8 +40,8 @@ namespace grid{
 	const double gy_l = 0.0;
 	const double gy_r = 1.0; 
 
-	const int nmin = 7;	
-	const int nmax = 20;
+	const int nmin = 6;	
+	const int nmax = 16;
 
 	const int hlevel_max = 2;	
 };
@@ -61,12 +61,12 @@ namespace dg_time{
 	// const int nt = 5000;
 
 	//curved channel
-	const double t_total = 200*1.0e-2;
-	const int nt = 200000;
+	// const double t_total = 200*1.0e-2;
+	// const int nt = 200000;
 
 	// //acoustic scatter time
-	// const double t_total = 3;
-	// const int nt = 60000;
+	const double t_total = 3;
+	const int nt = 60000;
 
 };
 
@@ -92,7 +92,7 @@ namespace dg_fun{
 /// @param load_balaning Repartitioning switch. 
 namespace dg_refine{
 
-	const bool adapt = true;
+	const bool adapt = false;
 
 	const int refine_frequency = 1;	// every time step refine once
 
