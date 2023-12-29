@@ -23,4 +23,9 @@ double Interpolate_to_boundary(int n, std::vector<double>& q, std::vector<double
 void Matrix_vector_multiplication(int n, std::vector<double>& d, std::vector<double>& f, std::vector<double>& out);
 
 void Legendre_polynomial_and_derivative(int n, double x, double& q, double& dq);
+
+double lagrangeInterpDeriv(int N, double x, std::vector<double> xj, std::vector<double> fj, std::vector<double> wj);
+
+double Lagrange_interpolation(int n, double x, std::vector<double>& xi, 
+				std::vector<double>& f, std::vector<double>& w);
 #endif

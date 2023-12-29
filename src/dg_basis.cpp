@@ -29,6 +29,11 @@ void Legendre_polynomial_and_derivative(int n, double x, double& q, double& dq);
 double Interpolate_to_boundary(int n, std::vector<double>& q, std::vector<double>& lag);
 
 void Matrix_vector_multiplication(int n, std::vector<double>& d, std::vector<double>& f, std::vector<double>& out);
+
+double lagrangeInterpDeriv(int N, double x, std::vector<double> xj, std::vector<double> fj, std::vector<double> wj);
+
+double Lagrange_interpolation(int n, double x, std::vector<double>& xi, 
+				std::vector<double>& f, std::vector<double>& w);
 //------------------------------------------------
 
 /// @brief 
@@ -401,5 +406,73 @@ bool Almost_equal(double a, double b){
 		}
 
 	}
+
+}
+
+//without array of indices
+double Lagrange_interpolation(int n, double x, std::vector<double>& xi, 
+				std::vector<double>& f, std::vector<double>& w){
+		
+	double numerator{};
+	double denominator{};
+
+	for(int j = 0; j <= n; ++j){
+
+		if(Almost_equal(x, xi[j])){	// on GL point
+			// std::cout << "this is being triggered" << std::endl;
+			return f[j];
+		}
+
+		double t = w[j] / (x - xi[j]);
+
+		numerator += t * f[j];
+
+		denominator += t;
+	}
+
+	return numerator / denominator;
+}
+
+//algo 36
+double lagrangeInterpDeriv(int N, double x, std::vector<double> xj, std::vector<double> fj, std::vector<double> wj){
+
+    bool atNode = false;
+    double numerator = 0;
+
+    double denominator;
+    double p;
+	int i;
+
+    for(int j = 0; j <= N; j++){
+        if(Almost_equal(x, xj[j])){
+            atNode = true;
+            p = fj[j];
+            denominator = -wj[j];
+            i = j;
+        }
+
+    }
+
+    if(atNode){
+        for(int j = 0; j <= N; j++){
+            if(j != i){
+                numerator = numerator + wj[j]*(p-fj[j])/(x-xj[j]);
+            }
+        }
+    }
+    else{
+        denominator = 0;
+        p = Lagrange_interpolation(N, x, xj, fj, wj);
+
+        for(int j = 0; j <= N; j++){
+            double t = wj[j] / (x - xj[j]);
+
+            numerator = numerator + t*(p-fj[j])/(x-xj[j]);
+
+            denominator = denominator + t;
+        }
+    }
+
+    return (numerator / denominator);
 
 }

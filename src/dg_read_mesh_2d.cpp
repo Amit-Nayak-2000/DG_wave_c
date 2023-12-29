@@ -67,16 +67,12 @@ void Read_mesh_2d(){
 		
 		// now we are at "$Nodes"
 		std::stringstream sss(charline);
-		// std::getline(gmsh_file, charline);
 		std::string string1;
 		sss >> string1;
 
 		// check if we are at the target position
 		if(string1 != "$Nodes"){
 			std::cout<< "Problem in .msh file. Please use Legency ASCII2 format." << "\n";
-			// std::cout << fileinfo::fileplace << std::endl;
-			// std::cout << dg_time::t_total << std::endl;
-			// std::cout << string1 << std::endl;
 			std::exit(EXIT_FAILURE);
 		}
 		

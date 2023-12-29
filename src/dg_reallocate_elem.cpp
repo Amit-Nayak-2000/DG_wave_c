@@ -455,6 +455,7 @@ void Enlarge_hash(std::vector<info_pack>& recv_info, char dir, int num_recv, std
 
 		// solution	
 		int num_solu = ((*it).n + 1) * ((*it).n + 1);
+		int num_bound = 4*((*it).n + 1);
 		for(int equ = 0; equ < dg_fun::num_of_equation; ++equ){
 
 			local::Hash_elem[key] -> solution[equ] = std::vector<double> (num_solu);	// allocate
@@ -465,6 +466,101 @@ void Enlarge_hash(std::vector<info_pack>& recv_info, char dir, int num_recv, std
 				++nodei;
 			}
 		}
+
+		//mapped geometry class
+		local::Hash_elem[key] -> holdmetrics.updateOrder((*it).n); //allocate
+
+		for(int k = 0; k < 12; k++){
+			switch(k) {
+				case 0:
+					//x_node
+					for(int i = 0; i < num_solu; ++i){
+						local::Hash_elem[key] -> holdmetrics.x_node[i] = solu[nodei]; //originally map[nodej]
+						++nodei; //originally nodej
+					}
+					break;
+				case 1:
+					//y_node
+					for(int i = 0; i < num_solu; ++i){
+						local::Hash_elem[key] -> holdmetrics.y_node[i] = solu[nodei];
+						++nodei;
+					}
+					break;
+				case 2:
+					//x_boundary
+					for(int i = 0; i < num_bound; ++i){
+						local::Hash_elem[key] -> holdmetrics.x_boundary[i] = solu[nodei];
+						++nodei;
+					}
+					break;
+				case 3:
+					//y_boundary
+					for(int i = 0; i < num_bound; ++i){
+						local::Hash_elem[key] -> holdmetrics.y_boundary[i] = solu[nodei];
+						++nodei;
+					}
+					break;
+				case 4:
+					//delx_delxi
+					for(int i = 0; i < num_solu; ++i){
+						local::Hash_elem[key] -> holdmetrics.delx_delxi[i] = solu[nodei];
+						++nodei;
+					}
+					break;
+				case 5:
+					//delx_deleta
+					for(int i = 0; i < num_solu; ++i){
+						local::Hash_elem[key] -> holdmetrics.delx_deleta[i] = solu[nodei];
+						++nodei;
+					}
+					break;
+				case 6:
+					//dely_delxi
+					for(int i = 0; i < num_solu; ++i){
+						local::Hash_elem[key] -> holdmetrics.dely_delxi[i] = solu[nodei];
+						++nodei;
+					}
+					break;
+				case 7:
+					//dely_deleta
+					for(int i = 0; i < num_solu; ++i){
+						local::Hash_elem[key] -> holdmetrics.dely_deleta[i] = solu[nodei];
+						++nodei;
+					}
+					break;
+				case 8:
+					//jacobian
+					for(int i = 0; i < num_solu; ++i){
+						local::Hash_elem[key] -> holdmetrics.jacobian[i] = solu[nodei];
+						++nodei;
+					}
+					break;
+				case 9:
+					//normalx
+					for(int i = 0; i < num_bound; ++i){
+						local::Hash_elem[key] -> holdmetrics.boundary_normal[i] = solu[nodei];
+						++nodei;
+					}
+					break;
+				case 10:
+					//normaly
+					for(int i = 0; i < num_bound; ++i){
+						local::Hash_elem[key] -> holdmetrics.boundary_normal_y[i] = solu[nodei];
+						++nodei;
+					}
+					break;
+				case 11:
+					//scaling factor
+					for(int i = 0; i < num_bound; ++i){
+						local::Hash_elem[key] -> holdmetrics.scaling_factor[i] = solu[nodei];
+						++nodei;
+					}
+					break;
+				default:
+					break;
+			}
+		}
+
 	
 		if(it != recv_info.begin()){
 			local::Hash_elem[pre_key] -> next = local::Hash_elem[key];
@@ -603,7 +699,9 @@ void Solution_pack(std::vector<long long int>& send_list, int solu_num, std::vec
 
 	int i{};
 
+	//iterate thru list of elements
 	for(auto& key : send_list){
+		//pack solutions
 		for(int equ = 0; equ < dg_fun::num_of_equation; ++equ){
 
 			for(auto& v : local::Hash_elem[key] -> solution[equ]){
@@ -612,6 +710,98 @@ void Solution_pack(std::vector<long long int>& send_list, int solu_num, std::vec
 				++i;
 			}	
 		}
+
+		for(int k = 0; k < 12; k++){
+			switch(k) {
+				case 0:
+					//x_node
+					for(auto& v : local::Hash_elem[key] -> holdmetrics.x_node){
+							solu_packed[i] = v;
+							++i;
+					}
+					break;
+				case 1:
+					//y_node
+					for(auto& v : local::Hash_elem[key] -> holdmetrics.y_node){
+							solu_packed[i] = v;
+							++i;
+					}
+					break;
+				case 2:
+					//x_boundary
+					for(auto& v : local::Hash_elem[key] -> holdmetrics.x_boundary){
+							solu_packed[i] = v;
+							++i;
+					}
+					break;
+				case 3:
+					//y_boundary
+					for(auto& v : local::Hash_elem[key] -> holdmetrics.y_boundary){
+							solu_packed[i] = v;
+							++i;
+					}
+					break;
+				case 4:
+					//delx_delxi
+					for(auto& v : local::Hash_elem[key] -> holdmetrics.delx_delxi){
+							solu_packed[i] = v;
+							++i;
+					}
+					break;
+				case 5:
+					//delx_deleta
+					for(auto& v : local::Hash_elem[key] -> holdmetrics.delx_deleta){
+							solu_packed[i] = v;
+							++i;
+					}
+					break;
+				case 6:
+					//dely_delxi
+					for(auto& v : local::Hash_elem[key] -> holdmetrics.dely_delxi){
+							solu_packed[i] = v;
+							++i;
+					}
+					break;
+				case 7:
+					//dely_deleta
+					for(auto& v : local::Hash_elem[key] -> holdmetrics.dely_deleta){
+							solu_packed[i] = v;
+							++i;
+					}
+					break;
+				case 8:
+					//jacobian
+					for(auto& v : local::Hash_elem[key] -> holdmetrics.jacobian){
+							solu_packed[i] = v;
+							++i;
+					}
+					break;
+				case 9:
+					//normalx
+					for(auto& v : local::Hash_elem[key] -> holdmetrics.boundary_normal){
+							solu_packed[i] = v;
+							++i;
+					}
+					break;
+				case 10:
+					//normaly
+					for(auto& v : local::Hash_elem[key] -> holdmetrics.boundary_normal_y){
+							solu_packed[i] = v;
+							++i;
+					}
+					break;
+				case 11:
+					//scaling factor
+					for(auto& v : local::Hash_elem[key] -> holdmetrics.scaling_factor){
+							solu_packed[i] = v;
+							++i;
+					}
+					break;
+				default:
+					break;
+			}
+		}
+
 	}
 
 }
@@ -623,11 +813,15 @@ void Solution_pack(std::vector<long long int>& send_list, int solu_num, std::vec
 /// @param solu_num solution number. For next step to transfer the solutions. 
 void Send_pack(std::vector<info_pack>& send_info, std::vector<long long int>::iterator& it, int& solu_num){
 
+	int boundary_num{};
+
 	for(auto& v : send_info){
 		
 		v.n = local::Hash_elem[*it] -> n;
 
 		solu_num += (v.n + 1) * (v.n + 1); 	// assume same poly order in x and y direction. 
+
+		boundary_num += 4*(v.n + 1);
 
 		for(int i = 0; i < 3; ++i){
 			v.index[i] = local::Hash_elem[*it] -> index[i];
@@ -649,6 +843,9 @@ void Send_pack(std::vector<info_pack>& send_info, std::vector<long long int>::it
 	}
 
 	solu_num *= dg_fun::num_of_equation;
+
+	//after solu_num has been calculated for solutions, tack on the size of mapped geometry data
+	solu_num += (7*(solu_num / dg_fun::num_of_equation)) + (5*boundary_num);
 
 }
 

@@ -1,1 +1,0 @@
-for BC: 0 is gauss, 1 is mirror, 2 is sin, default is gauss

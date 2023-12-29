@@ -25,4 +25,10 @@ void External_mirror_right_boundary(double t, double x, double y, std::vector<do
 
 void External_state_reflect_y(std::vector<double>& q_int, std::vector<double>& q_ext, 
 				std::vector<int>& index);
+
+void External_state_reflect(std::vector<double>& q_int, std::vector<double>& q_ext, 
+				std::vector<int>& index, double alpha, double beta);
+
+void External_state_radiation(std::vector<double>& q_int, std::vector<double>& q_ext, 
+				std::vector<int>& index);
 #endif

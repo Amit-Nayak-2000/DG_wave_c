@@ -8,7 +8,8 @@
 /// @param fileplace The path of mesh file and mesh file name
 /// @param output_place output directory. 
 namespace fileinfo{
-	 std::string fileplace;
+	const std::string fileplace = "../gmsh_files/64_elements.msh";
+	// const std::string fileplace = "../gmsh_files/1element.msh";
 //	const std::string fileplace = "../gmsh_files/strong/1024.msh";
 
 	const std::string output_place = "../outputs/";
@@ -31,18 +32,18 @@ namespace fileinfo{
 /// @param nmax maximum polynomial degree in x and y direction
 /// @param hlevel_max maximum h-refinement level. 
 namespace grid{
-	int exp_x; 
-	int exp_y; 
+	const int exp_x = 3; 
+	const int exp_y = 3; 
 	
-	double gx_l;
-	double gx_r; 
-	double gy_l;
-	double gy_r; 
+	const double gx_l = 0.0;
+	const double gx_r = 1.0; 
+	const double gy_l = 0.0;
+	const double gy_r = 1.0; 
 
-	int nmin;	
-	int nmax;
+	const int nmin = 7;	
+	const int nmax = 20;
 
-	int hlevel_max;	
+	const int hlevel_max = 2;	
 };
 //---------------------------------------------------------------------
 
@@ -55,10 +56,17 @@ namespace grid{
 /// @param nt time step number
 namespace dg_time{
 
-	double t_total;
-//	const double t_total = 0.5;
+	//wave
+	// const double t_total = 1.0e-2* 5;
+	// const int nt = 5000;
 
-	int nt;
+	//curved channel
+	const double t_total = 200*1.0e-2;
+	const int nt = 200000;
+
+	// //acoustic scatter time
+	// const double t_total = 3;
+	// const int nt = 60000;
 
 };
 
@@ -70,7 +78,7 @@ namespace dg_fun{
 
 	const int num_of_equation = 3;
 
-	double C;
+	const double C = 1.0;
 //	const double C =  1.0 / (4.0 * std::atan(1.0));
 };
 
@@ -84,20 +92,21 @@ namespace dg_fun{
 /// @param load_balaning Repartitioning switch. 
 namespace dg_refine{
 
-	bool adapt;
+	const bool adapt = true;
 
-	int refine_frequency;	// every time step refine once
+	const int refine_frequency = 1;	// every time step refine once
 
-	int fit_point_num;
+	const int fit_point_num = 4;
 
-	double tolerance_min;
+	const double tolerance_min = 1.0e-4; // originally e-6
 
-	double tolerance_max;
+	const double tolerance_max = 1.0e-7;  // originally e-10
 
-	bool load_balancing;
+	const bool load_balancing = true;
 
 };
 
+//e-4, e-8 for curved annulus? mabye e-6?
 //----------------------------------------------------------------------
 
 /// @brief
@@ -107,7 +116,7 @@ namespace dg_io{
 
 	const bool io = true;
 
-	const int output_frequency = 1;
+	const int output_frequency = 500;
 };
 
 

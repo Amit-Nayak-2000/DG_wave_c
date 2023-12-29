@@ -37,7 +37,9 @@ void A_times_spatial_derivative_x(){
 
 				int index = Get_single_index(i, j, (temp -> m + 1));
 			
-				xflux(temp -> solution, flux_x, index);			
+				// xflux(temp -> solution, flux_x, index);
+				xflux_updated(temp -> solution, flux_x, index, temp->holdmetrics.dely_deleta[index], temp->holdmetrics.delx_deleta[index]);	
+			
 			}
 
 			// flux_der
@@ -50,7 +52,8 @@ void A_times_spatial_derivative_x(){
 
 				for(int i = 0; i <= (temp -> n); ++i){
 
-					double inter = - (2.0 / del_x) * flux_der[s][i];
+					// double inter = - (2.0 / del_x) * flux_der[s][i];
+					double inter = -flux_der[s][i];
 
 					int index = Get_single_index(i, j, (temp -> m + 1));
 
@@ -92,7 +95,9 @@ void A_times_spatial_derivative_y(){
 			for(int j = 0; j <= (temp -> m); ++j){
 
 				int index = Get_single_index(i, j, (temp -> m + 1));
-				yflux(temp -> solution, flux_y, index);			
+				// yflux(temp -> solution, flux_y, index);		
+				yflux_updated(temp -> solution, flux_y, index, temp->holdmetrics.dely_delxi[index], temp->holdmetrics.delx_delxi[index]);		
+	
 			}
 			
 			// flux_der
@@ -105,12 +110,14 @@ void A_times_spatial_derivative_y(){
 
 				for(int j = 0; j <= (temp -> m); ++j){
 
-					double inter = - (2.0 / del_y) * flux_der[s][j];
+					// double inter = - (2.0 / del_y) * flux_der[s][j];
+					double inter = -flux_der[s][j];
 
 					int nodei = Get_single_index(i, j, (temp -> m + 1));
 
 	
 					(temp -> solution_time_der[s])[nodei] += inter;
+					(temp -> solution_time_der[s])[nodei] /= temp->holdmetrics.jacobian[nodei];
 				}
 			}
 

@@ -5,7 +5,7 @@
 
 // mesh file----------------------------------------
 namespace fileinfo{
-	extern  std::string fileplace;
+	extern const std::string fileplace;
 	extern const std::string output_place;
 	extern const std::string eff_filename;
 	extern const std::string crosssection_filename;
@@ -15,26 +15,26 @@ namespace fileinfo{
 
 // Grid size ---------------------------------------
 namespace grid{
-	extern  int exp_x;
-	extern  int exp_y;
+	extern const int exp_x;
+	extern const int exp_y;
 
-	extern  double gx_l;
-	extern  double gx_r;
-	extern  double gy_l;
-	extern  double gy_r;
+	extern const double gx_l;
+	extern const double gx_r;
+	extern const double gy_l;
+	extern const double gy_r;
 	
-	extern  int nmin;
-	extern  int nmax;
+	extern const int nmin;
+	extern const int nmax;
 
-	extern  int hlevel_max;
+	extern const int hlevel_max;
 };
 //--------------------------------------------------
 
 // time---------------------------------------------
 namespace dg_time{
 
-	extern  double t_total;
-	extern  int nt;
+	extern const double t_total;
+	extern const int nt;
 
 };
 //--------------------------------------------------
@@ -45,7 +45,7 @@ namespace dg_fun{
 
 	extern const int num_of_equation;
 	
-	extern  double C;
+	extern const double C;
 };
 
 //---------------------------------------------------
@@ -53,17 +53,17 @@ namespace dg_fun{
 // refinemnt ----------------------------------------
 namespace dg_refine{
 
-	extern  bool adapt;
+	extern const bool adapt;
 
-	extern  int refine_frequency;
+	extern const int refine_frequency;
 
-	extern  int fit_point_num;
+	extern const int fit_point_num;
 	
-	extern  double tolerance_min;
+	extern const double tolerance_min;
 
-	extern  double tolerance_max;
+	extern const double tolerance_max;
 
-	extern  bool load_balancing;
+	extern const bool load_balancing;
 };
 //---------------------------------------------------
 

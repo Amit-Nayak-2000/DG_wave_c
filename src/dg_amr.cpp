@@ -17,6 +17,14 @@
 #include <iostream>	// test
 #include "dg_test.h"	// test
 #include "dg_single_index.h"	// test
+#include "dg_transfinite_quad_map.h"
+#include "dg_nodal_2d_storage.h"
+#include "dg_affine_map.h"
+#include <iostream>
+// #include "dg_init.h"
+#include "dg_curve_interpolant.h"
+
+// CurveInterpolant B[4];
 
 /// global variable
 double xcoord_new[3]{};
@@ -124,7 +132,7 @@ void hpc_refinement(){
 		if(temp -> hrefine){	// h - refine======================================================================
 			
 			increment += 3; 
-			
+
 			// new coordinates
 			xcoord_new[0] = temp -> xcoords[0]; xcoord_new[2] = temp -> xcoords[1];
 			ycoord_new[0] = temp -> ycoords[0]; ycoord_new[2] = temp -> ycoords[1];
@@ -183,7 +191,12 @@ void hpc_refinement(){
 				// poly order
 				local::Hash_elem[new_key] -> n = temp -> n;
 				local::Hash_elem[new_key] -> m = temp -> m;
-				
+
+				// //intialize new mapped geometry class here!
+				// //local::Hash_elem[new_key] is the ptr I use
+				//Keep the order of the parent element in case it adapted.
+				local::Hash_elem[new_key]->holdmetrics.updateOrder(local::Hash_elem[new_key] -> n);
+
 				// faces(here we construct between siblings)
 				Two_siblings(new_key, position);
 					
@@ -195,7 +208,7 @@ void hpc_refinement(){
 				pre_key = new_key;
 				
 				temp2 = local::Hash_elem[new_key];
-				
+
 			}	
 			// form then external interfaces between 4 children and updates their neighbour's faces			
 			std::array<long long int, 4> children;	// four siblings' keys
@@ -218,10 +231,9 @@ void hpc_refinement(){
 			
 			if(temp -> n > grid::nmin){	// if polynomial order is larger then the minimum
 		
-				// p-coarsening
-//				p_coarsening_interpolate(temp);	// interpolation
+				p_coarsening_interpolate(temp);	// interpolation
 
-				p_coarsening_L2(temp);	// L2 projection
+				// p_coarsening_L2(temp);	// L2 projection
 			
 			}
 			else{	// h-coasrening
@@ -275,6 +287,10 @@ void hpc_refinement(){
 							// poly orders
 							local::Hash_elem[key_p] -> n = temp -> n; // the sibling should share same n, m
 							local::Hash_elem[key_p] -> m = temp -> m; 
+
+							// //intialize new mapped geometry class here!
+							// //local::Hash_elem[key_p] is the ptr I use
+							local::Hash_elem[key_p]->holdmetrics.updateOrder(local::Hash_elem[key_p] -> n);
 	
 	
 							// element boundary in reference space
@@ -308,7 +324,7 @@ void hpc_refinement(){
 							temp = local::Hash_elem[key_p];	// move pointer to the last 
 						
 							k += 3;	// skip other siblings 
-	
+							std::cout << "H COURSE" << std::endl;
 							// L2 project back to parent 						
 							Solution_back_to_parent(four_keys, key_p);
 	

@@ -14,6 +14,9 @@
 #include "dg_interface_construct.h"
 #include "dg_nodal_2d_storage.h"
 #include "dg_basis.h"
+#include "dg_single_index.h"
+#include "dg_affine_map.h"
+#include "dg_interpolate_to_new_points.h"
 
 // forward declaration-----------------------------------------------------------------------------------
 void Write_mesh(double t, int pre_elem);
@@ -37,7 +40,7 @@ void Serial_io(double t){
 
 		}
 		else{
-
+			// std::cout << "We are here" << std::endl;
 			MPI_Barrier(MPI_COMM_WORLD);		
 		
 		}
@@ -60,6 +63,8 @@ void Write_mesh(double t, int pre_elem){
 	// generate the file name
 	std::stringstream ss;
 	ss << fileinfo::output_place <<"output" << std::setfill('0') << std::setw(5) << file_num << ".dat";
+	// ss << fileinfo::output_place <<"output" << std::setfill('0') << std::setw(5) << ".csv." << file_num;
+
 	std::string filename = 	ss.str();
 	std::ofstream myfile; 	// stream class to write on files	
 
@@ -71,10 +76,9 @@ void Write_mesh(double t, int pre_elem){
 	if(mpi::rank == 0){
 		
 		myfile.open(filename, std::ios::trunc);	// truncate the old file
-
-		// headers
-		myfile<< "TITLE = \"MESH AND SOLUTIONS\" \n";
-		myfile<< "VARIABLES = \"X\", \"Y\", \"RANK\", \"HLEVEL\", \"PORDER\", \"KEY\", \"PRESSURE\", \"U\", \"V\",\n";
+		// myfile << "X,Y,P,U,V,L,PO" << "\n";
+		myfile << "TITLE = \"DG Plot\"" << "\n";
+		myfile << "VARIABLES = \"X\", \"Y\", \"P\", \"U\", \"V\", \"POLYNOMIAL ORDER\"" << "\n";
 		
 	}
 	else{
@@ -87,48 +91,94 @@ void Write_mesh(double t, int pre_elem){
 
 		myfile << std::fixed;
 		myfile << std::setprecision(5);
-//		myfile << "ZONE T= " << "\"" << "IEL" << std::setw(6) << elem << "\"" << "  " 
-//			<<"I=2, J=2"<< "  " << "DATAPACKING = POINT"<< "\n";
-		myfile << "ZONE T= " << "\"" << "IEL" << std::setw(8) << elem << "\"," << "  " 
-			<<"I=2, J=2, "<< "SOLUTIONTIME=" << t <<", DATAPACKING = POINT" << "\n";
-		
+
+		double x, y;
+
+		// double del_x = temp->xcoords[1] - temp->xcoords[0];
+		// double del_y = temp->ycoords[1] - temp->ycoords[0];
+
+		int linnumpoints = 4*(temp->n+1);
+
+		myfile << "ZONE T=\"" << iel + 1 << "\", I=" << linnumpoints << ", J=" << linnumpoints << ", DATAPACKING=POINT" << "\n";
+		// myfile << "ZONE T=\"" << iel + 1 << "\", I=" << temp->n + 1 << ", J=" << temp->n + 1 << ", DATAPACKING=POINT" << "\n";
+
 		++elem;
+
+		//works
+		std::vector<double> linx = linarray(-1, 1, linnumpoints);
+
+		std::vector<double> T;	// only need one interpolation matrix (porderx = pordery)
+		Polynomial_interpolate_matrix(nodal::gl_points[temp -> n], linx, T);
+
+		std::unordered_map<int, std::vector<double>> fnew;
+
+		std::unordered_map<int, std::vector<double>> newcoords;
+
+		std::unordered_map<int, std::vector<double>> oldcoords;
+
+		oldcoords[0] = std::vector<double>(temp->holdmetrics.x_node.size());
+		oldcoords[1] = std::vector<double>(temp->holdmetrics.y_node.size());
+		oldcoords[2] = std::vector<double>(temp->holdmetrics.y_node.size());
+
+		for(int j = 0; j <= temp->n; j++){
+			for(int i = 0; i <= temp->n; i++){
+				int index = Get_single_index(i,  j, temp->n + 1);
+				oldcoords[0][index] = temp->holdmetrics.x_node[index];
+				oldcoords[1][index] = temp->holdmetrics.x_node[index];
+				oldcoords[2][index] = temp->holdmetrics.y_node[index];
+
+
+			}
+
+			
+		}
+
 		
-		// interpolate solution to the four corner----------------------------------------------------
-		std::unordered_map<int, std::vector<double>> four;
-		Interpolate_to_four_corner(temp, four);
-		//--------------------------------------------------------------------------------------------
 
+		//seems to work
+		CoursetoFineInterp(temp->n , linnumpoints-1 , nodal::gl_points[temp->n], nodal::gl_points[temp->n], temp->solution, linx, linx, fnew);
+		//testing dis
+		CoursetoFineInterp(temp->n , linnumpoints-1, nodal::gl_points[temp->n], nodal::gl_points[temp->n], oldcoords, linx, linx, newcoords);
 
-	//	myfile << std::fixed;
-	//	myfile << std::setprecision(5);
-		long long int key_now = Get_key_fun(temp -> index[0], temp -> index[1], temp -> index[2]);
+		// for(int i = 0; i < temp->holdmetrics.x_node.size(); i++){
 
-		myfile << temp -> xcoords[0] << "  " << temp -> ycoords[0] 
-			<< "  " << mpi::rank << "  " << temp -> index[2]
-			<< "  "<< temp -> n << "  " << key_now 
-			<< "  " << four[0][0]<< "  " << four[1][0] << "  "<< four[2][0] <<"\n";
+		// }
 
+		// std::cout << temp->holdmetrics.x_node.size()  << " | " << newxnode.size() << std::endl;
+		// for(int j = 0; j <= temp->n; ++j){
+		for(int j = 0; j <= linnumpoints - 1; ++j){
+			// double y = Affine_mapping(nodal::gl_points[temp->n][j], temp -> ycoords[0], del_y);
+			// for(int i = 0; i <= temp->n; ++i){
+			for(int i = 0; i <= linnumpoints - 1; ++i){
+				// double x = Affine_mapping(nodal::gl_points[temp->n][i], temp -> xcoords[0], del_x);
+				// int index = Get_single_index(i,  j, temp->n + 1);
+				int index = Get_single_index(i,  j, linnumpoints);
+				// int MyIndex = Get_single_index(i, j, temp->n + 1);
+				// int revindex = Get_single_index(temp->n - i,  temp->n - j, temp->n + 1);
 
-		myfile << temp -> xcoords[0] << "  " << temp -> ycoords[1] 
-			<< "  " << mpi::rank << "  " << temp -> index[2]
-			<< "  "<< temp -> n <<"  "<< key_now
-			<< "  " << four[0][1] <<"  " << four[1][1] <<"  "<< four[2][1]<<"\n";
+				// x = temp->holdmetrics.x_node[index];
+				// y = temp->holdmetrics.y_node[index];
 
+				// x = newxnode[index];
+				// y = newynode[index];
 
-		myfile << temp -> xcoords[1] << "  " << temp -> ycoords[0] 
-			<< "  " << mpi::rank << "  " << temp -> index[2]
-			<< "  "<< temp -> n << "  " << key_now 
-			<< "  " << four[0][2] << "  "<< four[1][2] << "  "<< four[2][2]<<"\n";
+				// x = oldcoords[0][index];
+				// y = oldcoords[1][index];
 
+				// //output X, Y, P, U, V
+				// myfile << x << " " << y << " " << temp -> solution[0][index] << " " << temp -> solution[1][index] << " " << temp -> solution[2][index] << " " << temp->n << "\n";
 
-		myfile << temp -> xcoords[1] << "  " << temp -> ycoords[1] 
-			<< "  " << mpi::rank << "  " << temp -> index[2]
-			<< "  "<< temp -> n <<"  "<< key_now
-			<< "  " << four[0][3] << "  " << four[1][3] << "  " << four[2][3]<<"\n";
+				//output X, Y, P, U, V
+				// myfile << newcoords[0][index] << "," << newcoords[2][index] << "," << fnew[0][index] << "," <<  fnew[1][index] << "," << fnew[2][index] << "," << iel + 1 << "," << temp->n << "\n";
+				myfile << newcoords[0][index] << " " << newcoords[2][index] << " " << fnew[0][index] << " " <<  fnew[1][index] << " " << fnew[2][index] << " " << temp->n <<  "\n";
+
+			}
+		}
 		
 		temp = temp -> next;
 	}
+
+	
 
 
 	// close the file

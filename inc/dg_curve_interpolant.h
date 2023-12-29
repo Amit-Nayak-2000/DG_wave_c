@@ -4,6 +4,7 @@
 #include <vector>
 
 //page 227
+//Algorithm 96 and 97
 class CurveInterpolant{
     public:
         int N;
@@ -13,6 +14,8 @@ class CurveInterpolant{
         std::vector<double> w;
 
         CurveInterpolant(int N, std::vector<double> nodesparam, std::vector<double> xparam, std::vector<double> yparam);
+
+        CurveInterpolant();
 
         void EvalAt(double s, double &x, double &y);
 

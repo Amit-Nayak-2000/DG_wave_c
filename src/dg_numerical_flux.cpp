@@ -11,7 +11,8 @@
 #include <functional>	// std::plus
 #include "dg_mortar_construction.h"
 #include <iostream>	// test
-#include "dg_user_defined.h"
+#include "dg_single_index.h"
+#include "dg_interpolate_to_new_points.h"
 
 // forward declaration-----------------------------------------------------
 void Numerical_flux_x(double t);
@@ -43,6 +44,7 @@ void Numerical_flux_x(double t){
 
 
 			if(it_face -> face_type == 'L'){	// local neighbour
+				// std::cout << "LOCAL" << std::endl;
 				
 				long long int n_key = it_face -> key;	// neighbour's key
 
@@ -68,19 +70,102 @@ void Numerical_flux_x(double t){
 								temp -> mortar.a_r, temp -> mortar.b_r,
 						 		temp -> solution_int_l, 
 								temp -> mortar.psi_r, Tr);
-				std::vector<int> index{0, (temp -> mortar.n_max + 1), (temp -> mortar.n_max + 1) * 2};	
+				std::vector<int> index{0, (temp -> mortar.n_max + 1), (temp -> mortar.n_max + 1) * 2};
 
-				for(int s = 0; s <= temp -> mortar.n_max; ++s){
+				//fix start
+				if(temp->n < temp->mortar.n_max){
+					//In the case that temp is on a boundary that has a lower polynomial order.
+					//create temporary arrays of normals and scaling factors interpolated to the n_max polynomial order.
+					std::vector<double> interpother;
+					Polynomial_interpolate_matrix(nodal::gl_points[temp -> n], nodal::gl_points[temp->mortar.n_max], interpother);
 
-					//now functionally conforming interface==========================================
-					// Riemann solver
-					Riemann_solver_x(temp -> mortar.psi_l, temp -> mortar.psi_r, 
-							temp -> mortar.nflux, -1, index);
-					//=================================================================================
+					//allocate temporary arrays
+					std::vector<double> other_normal(4*(temp->n+ 1));
+					std::vector<double> other_normal_y(4*(temp->n + 1));
+					std::vector<double> other_scaling(4*(temp->n + 1));
 
-					std::transform(index.begin(), index.end(), index.begin(), 
-							[](int x){return (x + 1);});		// increment 1
-				}	
+					//copy contents over
+					for(int ii = 0; ii < other_normal.size(); ii++){
+						other_normal[ii] = temp->holdmetrics.boundary_normal[ii];
+						other_normal_y[ii] = temp->holdmetrics.boundary_normal_y[ii];
+						other_scaling[ii] = temp->holdmetrics.scaling_factor[ii];
+					}
+
+					//interpolate
+					coarsetofine1D(other_normal, temp->mortar.n_max, temp->n, interpother);
+					coarsetofine1D(other_normal_y, temp->mortar.n_max, temp->n, interpother);
+					coarsetofine1D(other_scaling, temp->mortar.n_max, temp->n, interpother);
+
+					//use other normals in riemann and other scaling for normal fluxes
+					for(int s = 0; s <= temp -> mortar.n_max; ++s){
+						int LeftIndex = Get_single_index(s, 3, 4); //left boundary normal
+						//now functionally conforming interface==========================================
+						// Riemann solver
+						Riemann_solver(temp -> mortar.psi_r, temp->mortar.psi_l,
+								temp -> mortar.nflux, other_normal[LeftIndex], other_normal_y[LeftIndex], index);
+						//=================================================================================
+
+						std::transform(index.begin(), index.end(), index.begin(), 
+								[](int x){return (x + 1);});		// increment 1
+					}
+
+					//muliply by scaling factor
+					int counter = 0;
+					for(int eq = 0; eq < 3; eq++){
+						for(int p = 0; p <= temp -> mortar.n_max; p++){
+							int scalindex = Get_single_index(p, 3, 4); //left scaling factor //3
+							temp->mortar.nflux[counter] = (temp->mortar.nflux[counter] * other_scaling[scalindex]);
+							counter++;
+						}
+					}
+					counter = 0;
+
+				}
+				else{
+					for(int s = 0; s <= temp -> mortar.n_max; ++s){
+						int LeftIndex = Get_single_index(s, 3, 4); //left boundary normal
+						//now functionally conforming interface==========================================
+						// Riemann solver
+						Riemann_solver(temp -> mortar.psi_r, temp->mortar.psi_l,
+								temp -> mortar.nflux, temp->holdmetrics.boundary_normal[LeftIndex], temp->holdmetrics.boundary_normal_y[LeftIndex], index);
+						//=================================================================================
+
+						std::transform(index.begin(), index.end(), index.begin(), 
+								[](int x){return (x + 1);});		// increment 1
+					}
+
+					//muliply by scaling factor
+					int counter = 0;
+					for(int eq = 0; eq < 3; eq++){
+						for(int p = 0; p <= temp -> mortar.n_max; p++){
+							int scalindex = Get_single_index(p, 3, 4); //left scaling factor //3
+							temp->mortar.nflux[counter] = (temp->mortar.nflux[counter] * temp->holdmetrics.scaling_factor[scalindex]);
+							counter++;
+						}
+					}
+					counter = 0;
+
+				}
+				//fix end
+
+				
+
+				
+
+					
+				
+
+				// for(int s = 0; s <= temp -> mortar.n_max; ++s){
+
+				// 	//now functionally conforming interface==========================================
+				// 	// Riemann solver
+				// 	Riemann_solver_x(temp -> mortar.psi_l, temp -> mortar.psi_r, 
+				// 			temp -> mortar.nflux, -1, index);
+				// 	//=================================================================================
+
+				// 	std::transform(index.begin(), index.end(), index.begin(), 
+				// 			[](int x){return (x + 1);});		// increment 1
+				// }	
 
 				// L2 project back to element, right element
 				L2_projection_to_element(temp -> mortar.n_max, temp -> m, 
@@ -108,45 +193,47 @@ void Numerical_flux_x(double t){
 					// map to physical plane
 					double y = Affine_mapping(nodal::gl_points[pordery][s], (temp -> ycoords[0]), del_y);
 
+					int LeftIndex = Get_single_index(s, 3, 4); //left boundary normal
+
 					// impose boundary conditions (wave) ------------------------------------------------
 					// External_state_Gaussian_exact(t, temp -> xcoords[0], y, solution_ext, index);
+					External_state_Gaussian_exact(t, temp->holdmetrics.x_boundary[LeftIndex], temp->holdmetrics.y_boundary[LeftIndex], solution_ext, index);
 					// ----------------------------------------------------------------------------------
 					
-					// impose mirror image solutions ---------------------------------------------------
-				//	External_mirror_right_boundary(t, temp -> xcoords[0], y, solution_ext, index);
+					// wall boundary conditions -----------------------------------------------------------------------------
+					// External_state_reflect(temp -> solution_int_l, solution_ext, index, temp->holdmetrics.boundary_normal[LeftIndex], temp->holdmetrics.boundary_normal_y[LeftIndex]);
+					// Radiation Boundary Condition ------------------------------------------------
+					// External_state_radiation(temp -> solution_int_l, solution_ext, index);
+					// -----------------------------------------------------------------------------
 					// ----------------------------------------------------------------------------------
 
 					// test -----------------------------------------------------------------------------
 					//External_state_sin_exact(t, temp -> xcoords[0], y, solution_ext, index);
 					// ----------------------------------------------------------------------------------
 
-					switch(user::BC){
-						case 0:
-							External_state_Gaussian_exact(t, temp -> xcoords[0], y, solution_ext, index);
-							break;
-
-						case 1:
-							External_mirror_right_boundary(t, temp -> xcoords[0], y, solution_ext, index);
-							break;
-						
-						case 2:
-							External_state_sin_exact(t, temp -> xcoords[0], y, solution_ext, index);
-							break;
-						
-						default:
-							External_state_Gaussian_exact(t, temp -> xcoords[0], y, solution_ext, index);
-					}
-
-
 					// Riemann solver
-					Riemann_solver_x(solution_ext, temp -> solution_int_l, 
-							temp -> nflux_l, -1, index);
+					// Riemann_solver_x(solution_ext, temp -> solution_int_l, 
+					// 		temp -> nflux_l, -1, index);
+
+					Riemann_solver(temp -> solution_int_l, solution_ext,
+						temp -> nflux_l, temp->holdmetrics.boundary_normal[LeftIndex], temp->holdmetrics.boundary_normal_y[LeftIndex], index);
 					
 					std::transform(index.begin(), index.end(), index.begin(), 
 							[](int x){return (x + 1);});		// increment 1
 				}
+
+				int counter = 0;
+				for(int eq = 0; eq < 3; eq++){
+					for(int p = 0; p <= temp->n; p++){
+						int scalindex = Get_single_index(p, 3, 4); //left scaling factor //3
+						temp->nflux_l[counter] = (temp->nflux_l[counter] * temp->holdmetrics.scaling_factor[scalindex]);
+						counter++;
+					}
+				}
+				counter = 0;
 			}
 			else{	// mpi boundary
+				// std::cout << "MPI Boundary" << std::endl;
 
 				long long int n_key = it_face -> key;
 				
@@ -171,18 +258,94 @@ void Numerical_flux_x(double t){
 
 				std::vector<int> index{0, (temp -> mortar.n_max + 1), (temp -> mortar.n_max + 1) * 2};	
 
-				for(int s = 0; s <= temp -> mortar.n_max; ++s){
+				//fix start MPI
+				if(temp->n < temp->mortar.n_max){
+					//In the case that temp is on a boundary that has a lower polynomial order.
+					//create temporary arrays of normals and scaling factors interpolated to the n_max polynomial order.
+					std::vector<double> interpother;
+					Polynomial_interpolate_matrix(nodal::gl_points[temp -> n], nodal::gl_points[temp->mortar.n_max], interpother);
 
-					// assuming functionally conforming------------------------------------------------
-					// Riemann solver, 
-					// use ghost layer to store the nflux_l, so that we can send the corresponding one
-					// to its neighbour. 
-					Riemann_solver_x(temp -> mortar.psi_l, temp -> mortar.psi_r, 
-							temp -> mortar.nflux, -1, index);
-					//---------------------------------------------------------------------------------
-					std::transform(index.begin(), index.end(), index.begin(), 
-							[](int x){return (x + 1);});		// increment 1
+					//allocate temporary arrays
+					std::vector<double> other_normal(4*(temp->n+ 1));
+					std::vector<double> other_normal_y(4*(temp->n + 1));
+					std::vector<double> other_scaling(4*(temp->n + 1));
+
+					//copy contents over
+					for(int ii = 0; ii < other_normal.size(); ii++){
+						other_normal[ii] = temp->holdmetrics.boundary_normal[ii];
+						other_normal_y[ii] = temp->holdmetrics.boundary_normal_y[ii];
+						other_scaling[ii] = temp->holdmetrics.scaling_factor[ii];
+					}
+
+					//interpolate
+					coarsetofine1D(other_normal, temp->mortar.n_max, temp->n, interpother);
+					coarsetofine1D(other_normal_y, temp->mortar.n_max, temp->n, interpother);
+					coarsetofine1D(other_scaling, temp->mortar.n_max, temp->n, interpother);
+
+					//use other normals in riemann and other scaling for normal fluxes
+					for(int s = 0; s <= temp -> mortar.n_max; ++s){
+						int LeftIndex = Get_single_index(s, 3, 4); //left boundary normal
+						//now functionally conforming interface==========================================
+						// Riemann solver
+						Riemann_solver(temp -> mortar.psi_r, temp->mortar.psi_l,
+								temp -> mortar.nflux, other_normal[LeftIndex], other_normal_y[LeftIndex], index);
+						//=================================================================================
+
+						std::transform(index.begin(), index.end(), index.begin(), 
+								[](int x){return (x + 1);});		// increment 1
+					}
+
+					//muliply by scaling factor
+					int counter = 0;
+					for(int eq = 0; eq < 3; eq++){
+						for(int p = 0; p <= temp -> mortar.n_max; p++){
+							int scalindex = Get_single_index(p, 3, 4); //left scaling factor //3
+							temp->mortar.nflux[counter] = (temp->mortar.nflux[counter] * other_scaling[scalindex]);
+							counter++;
+						}
+					}
+					counter = 0;
+
 				}
+				else{
+					for(int s = 0; s <= temp -> mortar.n_max; ++s){
+						int LeftIndex = Get_single_index(s, 3, 4); //left boundary normal
+						//now functionally conforming interface==========================================
+						// Riemann solver
+						Riemann_solver(temp -> mortar.psi_r, temp->mortar.psi_l,
+								temp -> mortar.nflux, temp->holdmetrics.boundary_normal[LeftIndex], temp->holdmetrics.boundary_normal_y[LeftIndex], index);
+						//=================================================================================
+
+						std::transform(index.begin(), index.end(), index.begin(), 
+								[](int x){return (x + 1);});		// increment 1
+					}
+
+					//muliply by scaling factor
+					int counter = 0;
+					for(int eq = 0; eq < 3; eq++){
+						for(int p = 0; p <= temp -> mortar.n_max; p++){
+							int scalindex = Get_single_index(p, 3, 4); //left scaling factor //3
+							temp->mortar.nflux[counter] = (temp->mortar.nflux[counter] * temp->holdmetrics.scaling_factor[scalindex]);
+							counter++;
+						}
+					}
+					counter = 0;
+
+				}
+				//fix end MPI
+
+				// for(int s = 0; s <= temp -> mortar.n_max; ++s){
+
+				// 	// assuming functionally conforming------------------------------------------------
+				// 	// Riemann solver, 
+				// 	// use ghost layer to store the nflux_l, so that we can send the corresponding one
+				// 	// to its neighbour. 
+				// 	Riemann_solver_x(temp -> mortar.psi_l, temp -> mortar.psi_r, 
+				// 			temp -> mortar.nflux, -1, index);
+				// 	//---------------------------------------------------------------------------------
+				// 	std::transform(index.begin(), index.end(), index.begin(), 
+				// 			[](int x){return (x + 1);});		// increment 1
+				// }
 
 				// L2 project back to element, right element
 				L2_projection_to_element(temp -> mortar.n_max, temp -> m, 
@@ -218,45 +381,44 @@ void Numerical_flux_x(double t){
 			for(int s = 0; s <= pordery; ++s){
 				// map to physical plane
 				double y = Affine_mapping(nodal::gl_points[pordery][s], (temp -> ycoords[0]), del_y);
-	
+				int RightIndex = Get_single_index(s, 1, 4);
 				// impose boundary conditions (test) ------------------------------------------------
 				//External_state_sin_exact(t, temp -> xcoords[1], y, solution_ext, index);
 				// ----------------------------------------------------------------------------------
 
 				// impose boundary conditions--------------------------------------------------------
 				// External_state_Gaussian_exact(t, temp -> xcoords[1], y, solution_ext, index);
+				External_state_Gaussian_exact(t, temp->holdmetrics.x_boundary[RightIndex], temp->holdmetrics.y_boundary[RightIndex], solution_ext, index);
 				// ----------------------------------------------------------------------------------
-
-				// reflection boundary conditions------------------------------------------------------
-//				External_state_reflect_x(temp -> solution_int_r, solution_ext, index);
-				// ----------------------------------------------------------------------------------
+				// wall boundary conditions -----------------------------------------------------------------------------
+				// External_state_reflect(temp -> solution_int_r, solution_ext, index, temp->holdmetrics.boundary_normal[RightIndex], temp->holdmetrics.boundary_normal_y[RightIndex]);
+				// Radiation Boundary Condition ------------------------------------------------
+				// Radiation Boundary Condition ------------------------------------------------
+				// External_state_radiation(temp -> solution_int_r, solution_ext, index); //usually this
+				// -----------------------------------------------------------------------------
 
 				//External_mirror_right_boundary(t, temp -> xcoords[1], y, solution_ext, index);
-
-				switch(user::BC){
-					case 0:
-						External_state_Gaussian_exact(t, temp -> xcoords[1], y, solution_ext, index);
-						break;
-
-					case 1:
-						External_mirror_right_boundary(t, temp -> xcoords[1], y, solution_ext, index);
-						break;
-					
-					case 2:
-						External_state_sin_exact(t, temp -> xcoords[1], y, solution_ext, index);
-						break;
-					
-					default:
-						External_state_Gaussian_exact(t, temp -> xcoords[1], y, solution_ext, index);
-				}
 	
 				// Riemann solver
-				Riemann_solver_x(temp -> solution_int_r, solution_ext,
-						temp -> nflux_r, 1, index);
+				// Riemann_solver_x(temp -> solution_int_r, solution_ext,
+				// 		temp -> nflux_r, 1, index);
+				Riemann_solver(temp -> solution_int_r, solution_ext,
+						temp -> nflux_r, temp->holdmetrics.boundary_normal[RightIndex], temp->holdmetrics.boundary_normal_y[RightIndex], index);
 				
 				std::transform(index.begin(), index.end(), index.begin(), 
 						[](int x){return (x + 1);});		// increment 1
 			}
+
+			// muliply by scaling factor
+			int counter = 0;
+			for(int eq = 0; eq < 3; eq++){
+				for(int p = 0; p <= temp->n; p++){
+					int scalindex = Get_single_index(p, 1, 4); //right scaling factor //1
+					temp->nflux_r[counter] = (temp->nflux_r[counter] * temp->holdmetrics.scaling_factor[scalindex]);
+					counter++;
+				}
+			}
+			counter = 0;
 
 		}
 
@@ -422,6 +584,8 @@ void Numerical_flux_y(double t){
 		for(auto it_face = temp -> facen[2].begin(); it_face != temp -> facen[2].end(); ++it_face){
 
 			if(it_face -> face_type == 'L'){	// local neighbour
+
+			// std::cout << "LOCAL" << std::endl;
 				
 				long long int n_key = it_face -> key;	// neighbour's key
 
@@ -450,15 +614,96 @@ void Numerical_flux_y(double t){
 			
 				std::vector<int> index{0, (temp -> mortar.n_max + 1), (temp -> mortar.n_max + 1) * 2};	
 
-				for(int s = 0; s <= temp -> mortar.n_max; ++s){
 
-					// Riemann solver
-					Riemann_solver_y(temp -> mortar.psi_l, temp -> mortar.psi_r, 
-							temp -> mortar.nflux, -1, index);
+				//startfix
+				if(temp->n < temp->mortar.n_max){
+					//In the case that temp is on a boundary that has a lower polynomial order.
+					//create temporary arrays of normals and scaling factors interpolated to the n_max polynomial order.
+					std::vector<double> interpother;
+					Polynomial_interpolate_matrix(nodal::gl_points[temp -> n], nodal::gl_points[temp->mortar.n_max], interpother);
 
-					std::transform(index.begin(), index.end(), index.begin(), 
-							[](int x){return (x + 1);});		// increment 1
-				}	
+					//allocate temporary arrays
+					std::vector<double> other_normal(4*(temp->n+ 1));
+					std::vector<double> other_normal_y(4*(temp->n + 1));
+					std::vector<double> other_scaling(4*(temp->n + 1));
+
+					//copy contents over
+					for(int ii = 0; ii < other_normal.size(); ii++){
+						other_normal[ii] = temp->holdmetrics.boundary_normal[ii];
+						other_normal_y[ii] = temp->holdmetrics.boundary_normal_y[ii];
+						other_scaling[ii] = temp->holdmetrics.scaling_factor[ii];
+					}
+
+					//interpolate
+					coarsetofine1D(other_normal, temp->mortar.n_max, temp->n, interpother);
+					coarsetofine1D(other_normal_y, temp->mortar.n_max, temp->n, interpother);
+					coarsetofine1D(other_scaling, temp->mortar.n_max, temp->n, interpother);
+
+					for(int s = 0; s <= temp -> mortar.n_max; ++s){
+						int BotIndex = Get_single_index(s, 0, 4); //bot boundary normal
+						//now functionally conforming interface==========================================
+						// Riemann solver
+						Riemann_solver(temp -> mortar.psi_r, temp->mortar.psi_l,
+								temp -> mortar.nflux, other_normal[BotIndex], other_normal_y[BotIndex], index);
+						//=================================================================================
+
+						std::transform(index.begin(), index.end(), index.begin(), 
+								[](int x){return (x + 1);});		// increment 1
+					}
+
+					// muliply by scaling factor
+					int counter = 0;
+					for(int eq = 0; eq < 3; eq++){
+						for(int p = 0; p <= temp -> mortar.n_max; p++){
+							int scalindex = Get_single_index(p, 0, 4); //bot scaling factor //0
+							temp->mortar.nflux[counter] = (temp->mortar.nflux[counter] * other_scaling[scalindex]);
+							counter++;
+						}
+					}
+					counter = 0;
+				}
+				else{
+					for(int s = 0; s <= temp -> mortar.n_max; ++s){
+						int BotIndex = Get_single_index(s, 0, 4); //bot boundary normal
+						//now functionally conforming interface==========================================
+						// Riemann solver
+						Riemann_solver(temp -> mortar.psi_r, temp->mortar.psi_l,
+								temp -> mortar.nflux, temp->holdmetrics.boundary_normal[BotIndex], temp->holdmetrics.boundary_normal_y[BotIndex], index);
+						//=================================================================================
+
+						std::transform(index.begin(), index.end(), index.begin(), 
+								[](int x){return (x + 1);});		// increment 1
+					}
+
+					// muliply by scaling factor
+					int counter = 0;
+					for(int eq = 0; eq < 3; eq++){
+						for(int p = 0; p <= temp -> mortar.n_max; p++){
+							int scalindex = Get_single_index(p, 0, 4); //bot scaling factor //0
+							temp->mortar.nflux[counter] = (temp->mortar.nflux[counter] * temp->holdmetrics.scaling_factor[scalindex]);
+							counter++;
+						}
+					}
+					counter = 0;
+
+				}
+				//endfix
+
+				
+
+				
+
+				
+
+				// for(int s = 0; s <= temp -> mortar.n_max; ++s){
+
+				// 	// Riemann solver
+				// 	Riemann_solver_y(temp -> mortar.psi_l, temp -> mortar.psi_r, 
+				// 			temp -> mortar.nflux, -1, index);
+
+				// 	std::transform(index.begin(), index.end(), index.begin(), 
+				// 			[](int x){return (x + 1);});		// increment 1
+				// }	
 
 				// L2 project back to element, right element
 				L2_projection_to_element(temp -> mortar.n_max, temp -> n, 
@@ -485,44 +730,47 @@ void Numerical_flux_y(double t){
 					// map to physical plane
 					double x = Affine_mapping(nodal::gl_points[porderx][s], (temp -> xcoords[0]), del_x);
 
+					int BotIndex = Get_single_index(s, 0, 4);
+
 					// impose boundary conditions (test) ------------------------------------------------
 					//External_state_sin_exact(t, x, (temp -> ycoords[0]), solution_ext, index);
 					// ----------------------------------------------------------------------------------
 
 					// impose boundary conditions-------------------------------------------------------
 					// External_state_Gaussian_exact(t, x, (temp -> ycoords[0]), solution_ext, index);
+					External_state_Gaussian_exact(t, temp->holdmetrics.x_boundary[BotIndex], temp->holdmetrics.y_boundary[BotIndex], solution_ext, index);
 					// ----------------------------------------------------------------------------------
 
-					// B.C. Mirror image solutions----------------------------------------------	
-					//External_mirror_right_boundary(t, x, (temp -> ycoords[0]), solution_ext, index);
+					// wall boundary conditions----------------------------------------------	
+					// External_state_reflect(temp -> solution_int_l, solution_ext, index, temp->holdmetrics.boundary_normal[BotIndex], temp->holdmetrics.boundary_normal_y[BotIndex]);
 					// -------------------------------------------------------------------------
 
-					switch(user::BC){
-						case 0:
-							External_state_Gaussian_exact(t, x, (temp -> ycoords[0]), solution_ext, index);
-							break;
+					// Radiation Boundary Condition ------------------------------------------------
+					// External_state_radiation(temp -> solution_int_l, solution_ext, index);
+					// -----------------------------------------------------------------------------
 
-						case 1:
-							External_mirror_right_boundary(t, x, (temp -> ycoords[0]), solution_ext, index);
-							break;
-						
-						case 2:
-							External_state_sin_exact(t, x, (temp -> ycoords[0]), solution_ext, index);
-							break;
-						
-						default:
-							External_state_Gaussian_exact(t, x, (temp -> ycoords[0]), solution_ext, index);
-					}
 					// Riemann solver
-					Riemann_solver_y(solution_ext, temp -> solution_int_l, 
-							temp -> nflux_l, -1, index);
+					// Riemann_solver_y(solution_ext, temp -> solution_int_l, 
+					// 		temp -> nflux_l, -1, index);
+					Riemann_solver(temp -> solution_int_l, solution_ext,
+						temp -> nflux_l, temp->holdmetrics.boundary_normal[BotIndex], temp->holdmetrics.boundary_normal_y[BotIndex], index);
 					
 					std::transform(index.begin(), index.end(), index.begin(), 
 							[](int x){return (x + 1);});		// increment 1
 				}
+
+				int counter = 0;
+				for(int eq = 0; eq < 3; eq++){
+					for(int p = 0; p <= temp->n; p++){
+						int scalindex = Get_single_index(p, 0, 4); //bot scaling factor //0
+						temp->nflux_l[counter] = (temp->nflux_l[counter] * temp->holdmetrics.scaling_factor[scalindex]);
+						counter++;
+					}
+				}
+				counter = 0;
 			}
 			else{	// mpi boundary
-
+				// std::cout << "MPIB" << std::endl;
 				long long int n_key = it_face -> key;
 
 				Form_mortar_y(temp, it_face); // allocate space on the mortar
@@ -544,15 +792,90 @@ void Numerical_flux_y(double t){
 
 				std::vector<int> index{0, (temp -> mortar.n_max + 1), (temp -> mortar.n_max + 1) * 2};	
 
-				for(int s = 0; s <= temp -> mortar.n_max; ++s){
 
-					// Riemann solver
-					Riemann_solver_y(temp -> mortar.psi_l, temp -> mortar.psi_r, 
-							temp -> mortar.nflux, -1, index);
+				//startfix MPI
+				if(temp->n < temp->mortar.n_max){
+					//In the case that temp is on a boundary that has a lower polynomial order.
+					//create temporary arrays of normals and scaling factors interpolated to the n_max polynomial order.
+					std::vector<double> interpother;
+					Polynomial_interpolate_matrix(nodal::gl_points[temp -> n], nodal::gl_points[temp->mortar.n_max], interpother);
 
-					std::transform(index.begin(), index.end(), index.begin(), 
-							[](int x){return (x + 1);});		// increment 1
+					//allocate temporary arrays
+					std::vector<double> other_normal(4*(temp->n+ 1));
+					std::vector<double> other_normal_y(4*(temp->n + 1));
+					std::vector<double> other_scaling(4*(temp->n + 1));
+
+					//copy contents over
+					for(int ii = 0; ii < other_normal.size(); ii++){
+						other_normal[ii] = temp->holdmetrics.boundary_normal[ii];
+						other_normal_y[ii] = temp->holdmetrics.boundary_normal_y[ii];
+						other_scaling[ii] = temp->holdmetrics.scaling_factor[ii];
+					}
+
+					//interpolate
+					coarsetofine1D(other_normal, temp->mortar.n_max, temp->n, interpother);
+					coarsetofine1D(other_normal_y, temp->mortar.n_max, temp->n, interpother);
+					coarsetofine1D(other_scaling, temp->mortar.n_max, temp->n, interpother);
+
+					for(int s = 0; s <= temp -> mortar.n_max; ++s){
+						int BotIndex = Get_single_index(s, 0, 4); //bot boundary normal
+						//now functionally conforming interface==========================================
+						// Riemann solver
+						Riemann_solver(temp -> mortar.psi_r, temp->mortar.psi_l,
+								temp -> mortar.nflux, other_normal[BotIndex], other_normal_y[BotIndex], index);
+						//=================================================================================
+
+						std::transform(index.begin(), index.end(), index.begin(), 
+								[](int x){return (x + 1);});		// increment 1
+					}
+
+					// muliply by scaling factor
+					int counter = 0;
+					for(int eq = 0; eq < 3; eq++){
+						for(int p = 0; p <= temp -> mortar.n_max; p++){
+							int scalindex = Get_single_index(p, 0, 4); //bot scaling factor //0
+							temp->mortar.nflux[counter] = (temp->mortar.nflux[counter] * other_scaling[scalindex]);
+							counter++;
+						}
+					}
+					counter = 0;
 				}
+				else{
+					for(int s = 0; s <= temp -> mortar.n_max; ++s){
+						int BotIndex = Get_single_index(s, 0, 4); //bot boundary normal
+						//now functionally conforming interface==========================================
+						// Riemann solver
+						Riemann_solver(temp -> mortar.psi_r, temp->mortar.psi_l,
+								temp -> mortar.nflux, temp->holdmetrics.boundary_normal[BotIndex], temp->holdmetrics.boundary_normal_y[BotIndex], index);
+						//=================================================================================
+
+						std::transform(index.begin(), index.end(), index.begin(), 
+								[](int x){return (x + 1);});		// increment 1
+					}
+
+					// muliply by scaling factor
+					int counter = 0;
+					for(int eq = 0; eq < 3; eq++){
+						for(int p = 0; p <= temp -> mortar.n_max; p++){
+							int scalindex = Get_single_index(p, 0, 4); //bot scaling factor //0
+							temp->mortar.nflux[counter] = (temp->mortar.nflux[counter] * temp->holdmetrics.scaling_factor[scalindex]);
+							counter++;
+						}
+					}
+					counter = 0;
+
+				}
+				//endfix MPI
+
+				// for(int s = 0; s <= temp -> mortar.n_max; ++s){
+
+				// 	// Riemann solver
+				// 	Riemann_solver_y(temp -> mortar.psi_l, temp -> mortar.psi_r, 
+				// 			temp -> mortar.nflux, -1, index);
+
+				// 	std::transform(index.begin(), index.end(), index.begin(), 
+				// 			[](int x){return (x + 1);});		// increment 1
+				// }
 
 				// L2 project back to element, right element
 				L2_projection_to_element(temp -> mortar.n_max, temp -> n, 
@@ -587,6 +910,7 @@ void Numerical_flux_y(double t){
 			for(int s = 0; s <= porderx; ++s){
 				// map to physical plane
 				double x = Affine_mapping(nodal::gl_points[porderx][s], (temp -> xcoords[0]), del_x);
+				int TopIndex = Get_single_index(s, 2, 4);
 	
 				// test -------------------------------------------------------------------------------
 				//External_state_sin_exact(t, x, (temp -> ycoords[1]), solution_ext, index);
@@ -594,40 +918,43 @@ void Numerical_flux_y(double t){
 
 				// impose boundary conditions --------------------------------------------------------
 				// External_state_Gaussian_exact(t, x, (temp -> ycoords[1]), solution_ext, index);
+				External_state_Gaussian_exact(t, temp->holdmetrics.x_boundary[TopIndex], temp->holdmetrics.y_boundary[TopIndex], solution_ext, index);
 				//------------------------------------------------------------------------------------
 
-				// impose mirror image solutions ---------------------------------------------------
-				//External_mirror_right_boundary(t, x, (temp -> ycoords[1]), solution_ext, index);
+				// wall boundary conditions------------------------------------------------------
+				// External_state_reflect(temp -> solution_int_r, solution_ext, index, temp->holdmetrics.boundary_normal[TopIndex], temp->holdmetrics.boundary_normal_y[TopIndex]);
+
+				// Radiation Boundary Condition ------------------------------------------------
+				// External_state_radiation(temp -> solution_int_r, solution_ext, index);
+				// -----------------------------------------------------------------------------
 				// ----------------------------------------------------------------------------------
 
 				// reflection boundary conditions------------------------------------------------------
-//				External_state_reflect_y(temp -> solution_int_r, solution_ext, index);
+				//External_state_reflect_y(temp -> solution_int_r, solution_ext, index);
 				// ----------------------------------------------------------------------------------
 
-				switch(user::BC){
-					case 0:
-						External_state_Gaussian_exact(t, x, (temp -> ycoords[1]), solution_ext, index);
-						break;
-
-					case 1:
-						External_mirror_right_boundary(t, x, (temp -> ycoords[1]), solution_ext, index);
-						break;
-					
-					case 2:
-						External_state_sin_exact(t, x, (temp -> ycoords[1]), solution_ext, index);
-						break;
-					
-					default:
-						External_state_Gaussian_exact(t, x, (temp -> ycoords[1]), solution_ext, index);
-				}
-				
 				// Riemann solver
-				Riemann_solver_y(temp -> solution_int_r, solution_ext, 
-						temp -> nflux_r, 1, index);
+				// Riemann_solver_y(temp -> solution_int_r, solution_ext, 
+				// 		temp -> nflux_r, 1, index);
+				Riemann_solver(temp -> solution_int_r, solution_ext,
+						temp -> nflux_r, temp->holdmetrics.boundary_normal[TopIndex], temp->holdmetrics.boundary_normal_y[TopIndex], index);
 				
 				std::transform(index.begin(), index.end(), index.begin(), 
 						[](int x){return (x + 1);});		// increment 1
 			}
+
+			// muliply by scaling factor
+			int counter = 0;
+			for(int eq = 0; eq < 3; eq++){
+				for(int p = 0; p <= temp->n; p++){
+					int scalindex = Get_single_index(p, 2, 4); //top scaling factor //2
+					temp->nflux_r[counter] = (temp->nflux_r[counter] * temp->holdmetrics.scaling_factor[scalindex]);
+					counter++;
+				}
+			}
+			counter = 0;
+
+
 
 		}
 

@@ -26,11 +26,29 @@ void Form_new_set_of_points(int m, int start, std::vector<double>& y);
 
 void Two_dir_inter(long long int p_key, Unit* c, std::vector<double>& T_x, std::vector<double>& T_y, int n, int m);
 
+void Two_direc_interp(long long int p_key, Unit* c, std::vector<double>& T_x, std::vector<double>& T_y, int n, int m);
+
 void Mortar_inter_back(Unit* c, Unit* p, std::vector<double>& Ty, std::vector<double>& Tx, double b);
+
+void Mortar_inter_back_map(Unit* c, Unit* p, std::vector<double>& Ty, std::vector<double>& Tx, double b);
 
 void Lagrange_inter_back(Unit* c, Unit* p, std::vector<double>& Ty, std::vector<double>& Tx, double b);
 
 void Lagrange_inter_back_transpose(Unit* c, Unit* p, std::vector<double>& Ty, std::vector<double>& Tx, double b);
+
+void coarsetofine(std::vector<double> &target, int new_order, int currentorder, std::vector<double> &T);
+
+void coarsetofine1D(std::vector<double> &target, int new_order, int currentorder, const std::vector<double> &T);
+
+void CoursetoFineInterp(int nold, int nnew, std::vector<double> &x, std::vector<double> &y, std::unordered_map<int, std::vector<double>> &f, 
+std::vector<double> &xnew,  std::vector<double> &ynew, std::unordered_map<int, std::vector<double>> &fnew);
+
+std::vector<double> linarray(double min, double max, int N);
+
+void boundaryinterp1D(Unit* c, int n, int m);
+
+void CoursetoFineInterpCoords(int nold, int nnew, std::vector<double> &x, std::vector<double> &y, std::unordered_map<int, std::vector<double>> &f, 
+std::vector<double> &xnew,  std::vector<double> &ynew, std::unordered_map<int, std::vector<double>> &fnew);
 //--------------------------------------------------------------------------------------------------------------
 
 
@@ -90,12 +108,33 @@ void Solutions_to_children(std::array<long long int, 4>& keys, long long int p_k
 
 	// c0
 	Two_dir_inter(p_key, c0, T_xl, T_yl, n, m);
+	Two_direc_interp(p_key, c0, T_xl, T_yl, n, m);
+
 	// c1
 	Two_dir_inter(p_key, c1, T_xr, T_yl, n, m);
+	Two_direc_interp(p_key, c1, T_xr, T_yl, n, m);
+
 	// c2
 	Two_dir_inter(p_key, c2, T_xr, T_yr, n, m);
+	Two_direc_interp(p_key, c2, T_xr, T_yr, n, m);
+
 	// c3
 	Two_dir_inter(p_key, c3, T_xl, T_yr, n, m);
+	Two_direc_interp(p_key, c3, T_xl, T_yr, n, m);
+
+	// std::cout << "1st child" << std::endl;
+	// c0->holdmetrics.outputMetrics();
+
+	// std::cout << "2nd child" << std::endl;
+	// c1->holdmetrics.outputMetrics();
+
+	// std::cout << "3rd child" << std::endl;
+	// c2->holdmetrics.outputMetrics();
+
+	// std::cout << "4th child" << std::endl;
+	// c3->holdmetrics.outputMetrics();
+
+	
 }
 
 
@@ -211,6 +250,50 @@ void Solution_back_to_parent(std::array<long long int, 4>& keys, long long int p
 	Mortar_inter_back(c1, temp, Tl, Tr, 0.25);
 	Mortar_inter_back(c2, temp, Tr, Tr, 0.25);
 	Mortar_inter_back(c3, temp, Tr, Tl, 0.25);
+
+	//Project Nodes Back to parent
+	Mortar_inter_back_map(c0, temp, Tl, Tl, 0.25);
+	Mortar_inter_back_map(c1, temp, Tl, Tr, 0.25);
+	Mortar_inter_back_map(c2, temp, Tr, Tr, 0.25);
+	Mortar_inter_back_map(c3, temp, Tr, Tl, 0.25);
+
+	//Boundary Coordinate of Parent
+	boundaryinterp1D(temp, n, m);
+
+	
+	std::vector<double> one_x(n+1);
+	std::vector<double> one_y(n+1);
+	std::vector<double> two_x(n+1);
+	std::vector<double> two_y(n+1);
+	std::vector<double> three_x(n+1);
+	std::vector<double> three_y(n+1);
+	std::vector<double> four_x(n+1);
+	std::vector<double> four_y(n+1);
+
+
+	for(int i = 0; i <= n; i++){
+		one_x[i] = temp->holdmetrics.x_boundary[Get_single_index(i, 0, 4)];
+		one_y[i] = temp->holdmetrics.y_boundary[Get_single_index(i, 0, 4)]; 
+
+		two_x[i] = temp->holdmetrics.x_boundary[Get_single_index(i, 1, 4)];
+		two_y[i] = temp->holdmetrics.y_boundary[Get_single_index(i, 1, 4)];
+
+		three_x[i] = temp->holdmetrics.x_boundary[Get_single_index(i, 2, 4)]; 
+		three_y[i] = temp->holdmetrics.y_boundary[Get_single_index(i, 2, 4)];
+
+		four_x[i] = temp->holdmetrics.x_boundary[Get_single_index(i, 3, 4)]; 
+		four_y[i] = temp->holdmetrics.y_boundary[Get_single_index(i, 3, 4)];
+	}
+
+	CurveInterpolant bot(n, nodal::gl_points[n], one_x, one_y);
+	CurveInterpolant right(n, nodal::gl_points[n], two_x, two_y);
+	CurveInterpolant top(n, nodal::gl_points[n], three_x, three_y);
+	CurveInterpolant left(n, nodal::gl_points[n], four_x, four_y);
+
+	CurveInterpolant coarse_B[4] = {bot, right, top, left};
+
+	//metrics, jacobians, normals, scaling factors of Parent
+	temp->holdmetrics.recalcscalenorms(coarse_B, nodal::gl_points[n]);
 	// ===============================================================================
 
 	// use lagrange interpolation =====================================================
@@ -359,6 +442,356 @@ void Mortar_inter_back(Unit* c, Unit* p, std::vector<double>& Ty, std::vector<do
 
 
 
+/// @param c pointer to child.
+/// @param p pointer to parent.
+/// @param Ty y direction interpolatio matrix. 
+/// @param Tx x direction interpolatio matrix. 
+void Mortar_inter_back_map(Unit* c, Unit* p, std::vector<double>& Ty, std::vector<double>& Tx, double b){
+
+	int n = p -> n; // x, y dir poly order should be the same. 
+
+	std::vector<double> middle;
+
+	//x_node
+	middle = std::vector<double>((n + 1) * (n + 1));
+
+	for(int xi = 0; xi <= n; ++xi ){	// loop in x direction
+
+		for(int i = 0; i <= n; ++i ){
+
+			int nodep = Get_single_index(xi, i, n + 1);
+
+			for(int j = 0; j <= n; ++j){
+
+				int nodei = Get_single_index(j, i, n + 1);
+
+				int nodec = Get_single_index(xi, j, n + 1);
+
+				middle[nodep] +=  Ty[nodei] * 
+							(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+							* (c -> holdmetrics.x_node[nodec]);
+			}
+		}
+
+	}
+
+	// x dir
+	for(int yi = 0; yi <= n; ++yi){
+
+		for(int i = 0; i <= n; ++i){
+
+			int nodep = Get_single_index(i, yi, n + 1);
+
+			for(int j = 0; j <= n; ++j){
+			
+				int nodei = Get_single_index(j, i, n + 1);
+
+				int nodec = Get_single_index(j, yi, n + 1);
+
+				p ->holdmetrics.x_node[nodep] +=  b * Tx[nodei] * 
+							(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+							* (middle[nodec]);
+
+			}
+		}
+
+	}
+
+	middle.clear();
+
+
+	//y_node
+	middle = std::vector<double>((n + 1) * (n + 1));
+
+	for(int xi = 0; xi <= n; ++xi ){	// loop in x direction
+
+		for(int i = 0; i <= n; ++i ){
+
+			int nodep = Get_single_index(xi, i, n + 1);
+
+			for(int j = 0; j <= n; ++j){
+
+				int nodei = Get_single_index(j, i, n + 1);
+
+				int nodec = Get_single_index(xi, j, n + 1);
+
+				middle[nodep] +=  Ty[nodei] * 
+							(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+							* (c -> holdmetrics.y_node[nodec]);
+			}
+		}
+
+	}
+
+	// x dir
+	for(int yi = 0; yi <= n; ++yi){
+
+		for(int i = 0; i <= n; ++i){
+
+			int nodep = Get_single_index(i, yi, n + 1);
+
+			for(int j = 0; j <= n; ++j){
+			
+				int nodei = Get_single_index(j, i, n + 1);
+
+				int nodec = Get_single_index(j, yi, n + 1);
+
+				p ->holdmetrics.y_node[nodep] +=  b * Tx[nodei] * 
+							(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+							* (middle[nodec]);
+
+			}
+		}
+
+	}
+
+	middle.clear();
+
+
+
+
+	
+	// //delx_delxi
+	// middle = std::vector<double>((n + 1) * (n + 1));
+
+	// for(int xi = 0; xi <= n; ++xi ){	// loop in x direction
+
+	// 	for(int i = 0; i <= n; ++i ){
+
+	// 		int nodep = Get_single_index(xi, i, n + 1);
+
+	// 		for(int j = 0; j <= n; ++j){
+
+	// 			int nodei = Get_single_index(j, i, n + 1);
+
+	// 			int nodec = Get_single_index(xi, j, n + 1);
+
+	// 			middle[nodep] +=  Ty[nodei] * 
+	// 						(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+	// 						* (c -> holdmetrics.delx_delxi[nodec]);
+	// 		}
+	// 	}
+
+	// }
+
+	// // x dir
+	// for(int yi = 0; yi <= n; ++yi){
+
+	// 	for(int i = 0; i <= n; ++i){
+
+	// 		int nodep = Get_single_index(i, yi, n + 1);
+
+	// 		for(int j = 0; j <= n; ++j){
+			
+	// 			int nodei = Get_single_index(j, i, n + 1);
+
+	// 			int nodec = Get_single_index(j, yi, n + 1);
+
+	// 			p ->holdmetrics.delx_delxi[nodep] +=  b * Tx[nodei] * 
+	// 						(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+	// 						* (middle[nodec]);
+
+	// 		}
+	// 	}
+
+	// }
+
+	// middle.clear();
+
+
+	// //delx_deleta
+	// middle = std::vector<double>((n + 1) * (n + 1));
+
+	// for(int xi = 0; xi <= n; ++xi ){	// loop in x direction
+
+	// 	for(int i = 0; i <= n; ++i ){
+
+	// 		int nodep = Get_single_index(xi, i, n + 1);
+
+	// 		for(int j = 0; j <= n; ++j){
+
+	// 			int nodei = Get_single_index(j, i, n + 1);
+
+	// 			int nodec = Get_single_index(xi, j, n + 1);
+
+	// 			middle[nodep] +=  Ty[nodei] * 
+	// 						(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+	// 						* (c -> holdmetrics.delx_deleta[nodec]);
+	// 		}
+	// 	}
+
+	// }
+
+	// // x dir
+	// for(int yi = 0; yi <= n; ++yi){
+
+	// 	for(int i = 0; i <= n; ++i){
+
+	// 		int nodep = Get_single_index(i, yi, n + 1);
+
+	// 		for(int j = 0; j <= n; ++j){
+			
+	// 			int nodei = Get_single_index(j, i, n + 1);
+
+	// 			int nodec = Get_single_index(j, yi, n + 1);
+
+	// 			p ->holdmetrics.delx_deleta[nodep] +=  b * Tx[nodei] * 
+	// 						(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+	// 						* (middle[nodec]);
+
+	// 		}
+	// 	}
+
+	// }
+
+	// middle.clear();
+
+	// //dely_delxi
+	// middle = std::vector<double>((n + 1) * (n + 1));
+
+	// for(int xi = 0; xi <= n; ++xi ){	// loop in x direction
+
+	// 	for(int i = 0; i <= n; ++i ){
+
+	// 		int nodep = Get_single_index(xi, i, n + 1);
+
+	// 		for(int j = 0; j <= n; ++j){
+
+	// 			int nodei = Get_single_index(j, i, n + 1);
+
+	// 			int nodec = Get_single_index(xi, j, n + 1);
+
+	// 			middle[nodep] +=  Ty[nodei] * 
+	// 						(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+	// 						* (c -> holdmetrics.dely_delxi[nodec]);
+	// 		}
+	// 	}
+
+	// }
+
+	// // x dir
+	// for(int yi = 0; yi <= n; ++yi){
+
+	// 	for(int i = 0; i <= n; ++i){
+
+	// 		int nodep = Get_single_index(i, yi, n + 1);
+
+	// 		for(int j = 0; j <= n; ++j){
+			
+	// 			int nodei = Get_single_index(j, i, n + 1);
+
+	// 			int nodec = Get_single_index(j, yi, n + 1);
+
+	// 			p ->holdmetrics.dely_delxi[nodep] +=  b * Tx[nodei] * 
+	// 						(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+	// 						* (middle[nodec]);
+
+	// 		}
+	// 	}
+
+	// }
+
+	// middle.clear();
+
+	// //dely_deleta
+	// middle = std::vector<double>((n + 1) * (n + 1));
+
+	// for(int xi = 0; xi <= n; ++xi ){	// loop in x direction
+
+	// 	for(int i = 0; i <= n; ++i ){
+
+	// 		int nodep = Get_single_index(xi, i, n + 1);
+
+	// 		for(int j = 0; j <= n; ++j){
+
+	// 			int nodei = Get_single_index(j, i, n + 1);
+
+	// 			int nodec = Get_single_index(xi, j, n + 1);
+
+	// 			middle[nodep] +=  Ty[nodei] * 
+	// 						(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+	// 						* (c -> holdmetrics.dely_deleta[nodec]);
+	// 		}
+	// 	}
+
+	// }
+
+	// // x dir
+	// for(int yi = 0; yi <= n; ++yi){
+
+	// 	for(int i = 0; i <= n; ++i){
+
+	// 		int nodep = Get_single_index(i, yi, n + 1);
+
+	// 		for(int j = 0; j <= n; ++j){
+			
+	// 			int nodei = Get_single_index(j, i, n + 1);
+
+	// 			int nodec = Get_single_index(j, yi, n + 1);
+
+	// 			p ->holdmetrics.dely_deleta[nodep] +=  b * Tx[nodei] * 
+	// 						(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+	// 						* (middle[nodec]);
+
+	// 		}
+	// 	}
+
+	// }
+
+	// middle.clear();
+
+	// //jacobian
+	// middle = std::vector<double>((n + 1) * (n + 1));
+
+	// for(int xi = 0; xi <= n; ++xi ){	// loop in x direction
+
+	// 	for(int i = 0; i <= n; ++i ){
+
+	// 		int nodep = Get_single_index(xi, i, n + 1);
+
+	// 		for(int j = 0; j <= n; ++j){
+
+	// 			int nodei = Get_single_index(j, i, n + 1);
+
+	// 			int nodec = Get_single_index(xi, j, n + 1);
+
+	// 			middle[nodep] +=  Ty[nodei] * 
+	// 						(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+	// 						* (c -> holdmetrics.jacobian[nodec]);
+	// 		}
+	// 	}
+
+	// }
+
+	// // x dir
+	// for(int yi = 0; yi <= n; ++yi){
+
+	// 	for(int i = 0; i <= n; ++i){
+
+	// 		int nodep = Get_single_index(i, yi, n + 1);
+
+	// 		for(int j = 0; j <= n; ++j){
+			
+	// 			int nodei = Get_single_index(j, i, n + 1);
+
+	// 			int nodec = Get_single_index(j, yi, n + 1);
+
+	// 			p ->holdmetrics.jacobian[nodep] +=  b * Tx[nodei] * 
+	// 						(nodal::gl_weights[n][j] / nodal::gl_weights[n][i])
+	// 						* (middle[nodec]);
+
+	// 		}
+	// 	}
+
+	// }
+
+	// middle.clear();
+
+}
+
+
+
+
 /// @brief
 /// Use the interpolation matrix in x and y direction and obtain the interpolated solutions.
 /// @param p_key parents key.
@@ -400,6 +833,258 @@ void Two_dir_inter(long long int p_key, Unit* c, std::vector<double>& T_x, std::
 		}
 	}
 
+
+}
+
+//Interpolates nodes, metric terms and jacobians.
+void Two_direc_interp(long long int p_key, Unit* c, std::vector<double>& T_x, std::vector<double>& T_y, int n, int m){
+
+	//Interpolate Nodes
+	std::vector<double> middle;	// intermidiate matrix. 
+
+	//x_node:
+	// y direction
+	middle = std::vector<double> ((n + 1) * (m + 1));
+	
+	for(int i = 0; i <= n; ++i){
+
+		int start = Get_single_index(i, 0, m + 1);
+
+		// interval == 1 since we are in teh y direction
+		// restriction: children inderit parent's polynomial order. 
+		Interpolate_to_new_points(m + 1,  m + 1, T_y,
+				local::Hash_elem[p_key] -> holdmetrics.x_node, middle, start, start, 1);
+	}
+	
+
+	// x direction
+	for(int j = 0; j <= m; ++j){
+
+		int start = Get_single_index(0, j, m + 1);
+
+		Interpolate_to_new_points(n + 1,  n + 1, T_x,
+				middle, c -> holdmetrics.x_node, start, start, m + 1);
+		
+	}
+
+	middle.clear();
+
+	//y_node:
+	// y direction
+	middle = std::vector<double> ((n + 1) * (m + 1));
+	
+	for(int i = 0; i <= n; ++i){
+
+		int start = Get_single_index(i, 0, m + 1);
+
+		// interval == 1 since we are in teh y direction
+		// restriction: children inderit parent's polynomial order. 
+		Interpolate_to_new_points(m + 1,  m + 1, T_y,
+				local::Hash_elem[p_key] -> holdmetrics.y_node, middle, start, start, 1);
+	}
+	
+
+	// x direction
+	for(int j = 0; j <= m; ++j){
+
+		int start = Get_single_index(0, j, m + 1);
+
+		Interpolate_to_new_points(n + 1,  n + 1, T_x,
+				middle, c -> holdmetrics.y_node, start, start, m + 1);
+		
+	}
+
+	middle.clear();
+
+	//Calculate Boundaries
+	boundaryinterp1D(c, n, m);
+
+	std::vector<double> one_x(n+1);
+	std::vector<double> one_y(n+1);
+	std::vector<double> two_x(n+1);
+	std::vector<double> two_y(n+1);
+	std::vector<double> three_x(n+1);
+	std::vector<double> three_y(n+1);
+	std::vector<double> four_x(n+1);
+	std::vector<double> four_y(n+1);
+
+
+	for(int i = 0; i <= n; i++){
+		one_x[i] = c->holdmetrics.x_boundary[Get_single_index(i, 0, 4)];
+		one_y[i] = c->holdmetrics.y_boundary[Get_single_index(i, 0, 4)]; 
+
+		two_x[i] = c->holdmetrics.x_boundary[Get_single_index(i, 1, 4)];
+		two_y[i] = c->holdmetrics.y_boundary[Get_single_index(i, 1, 4)];
+
+		three_x[i] = c->holdmetrics.x_boundary[Get_single_index(i, 2, 4)]; 
+		three_y[i] = c->holdmetrics.y_boundary[Get_single_index(i, 2, 4)];
+
+		four_x[i] = c->holdmetrics.x_boundary[Get_single_index(i, 3, 4)]; 
+		four_y[i] = c->holdmetrics.y_boundary[Get_single_index(i, 3, 4)];
+	}
+
+	CurveInterpolant bot(n, nodal::gl_points[n], one_x, one_y);
+	CurveInterpolant right(n, nodal::gl_points[n], two_x, two_y);
+	CurveInterpolant top(n, nodal::gl_points[n], three_x, three_y);
+	CurveInterpolant left(n, nodal::gl_points[n], four_x, four_y);
+
+	CurveInterpolant refine_B[4] = {bot, right, top, left};
+
+	//metrics, jacobians, normals, scaling factors
+	c->holdmetrics.recalcscalenorms(refine_B, nodal::gl_points[n]);
+
+
+
+
+
+	// //delx_delxi:
+	// // y direction
+	// middle = std::vector<double> ((n + 1) * (m + 1));
+	
+	// for(int i = 0; i <= n; ++i){
+
+	// 	int start = Get_single_index(i, 0, m + 1);
+
+	// 	// interval == 1 since we are in teh y direction
+	// 	// restriction: children inderit parent's polynomial order. 
+	// 	Interpolate_to_new_points(m + 1,  m + 1, T_y,
+	// 			local::Hash_elem[p_key] -> holdmetrics.delx_delxi, middle, start, start, 1);
+	// }
+	
+
+	// // x direction
+	// for(int j = 0; j <= m; ++j){
+
+	// 	int start = Get_single_index(0, j, m + 1);
+
+	// 	Interpolate_to_new_points(n + 1,  n + 1, T_x,
+	// 			middle, c -> holdmetrics.delx_delxi, start, start, m + 1);
+		
+	// }
+
+	// middle.clear();
+
+	// //delx_deleta:
+	// // y direction
+	// middle = std::vector<double> ((n + 1) * (m + 1));
+	
+	// for(int i = 0; i <= n; ++i){
+
+	// 	int start = Get_single_index(i, 0, m + 1);
+
+	// 	// interval == 1 since we are in teh y direction
+	// 	// restriction: children inderit parent's polynomial order. 
+	// 	Interpolate_to_new_points(m + 1,  m + 1, T_y,
+	// 			local::Hash_elem[p_key] -> holdmetrics.delx_deleta, middle, start, start, 1);
+	// }
+	
+
+	// // x direction
+	// for(int j = 0; j <= m; ++j){
+
+	// 	int start = Get_single_index(0, j, m + 1);
+
+	// 	Interpolate_to_new_points(n + 1,  n + 1, T_x,
+	// 			middle, c -> holdmetrics.delx_deleta, start, start, m + 1);
+		
+	// }
+
+	// middle.clear();
+
+
+	// //dely_delxi:
+	// // y direction
+	// middle = std::vector<double> ((n + 1) * (m + 1));
+	
+	// for(int i = 0; i <= n; ++i){
+
+	// 	int start = Get_single_index(i, 0, m + 1);
+
+	// 	// interval == 1 since we are in teh y direction
+	// 	// restriction: children inderit parent's polynomial order. 
+	// 	Interpolate_to_new_points(m + 1,  m + 1, T_y,
+	// 			local::Hash_elem[p_key] -> holdmetrics.dely_delxi, middle, start, start, 1);
+	// }
+	
+
+	// // x direction
+	// for(int j = 0; j <= m; ++j){
+
+	// 	int start = Get_single_index(0, j, m + 1);
+
+	// 	Interpolate_to_new_points(n + 1,  n + 1, T_x,
+	// 			middle, c -> holdmetrics.dely_delxi, start, start, m + 1);
+		
+	// }
+
+	// middle.clear();
+
+
+	// //dely_deleta:
+	// // y direction
+	// middle = std::vector<double> ((n + 1) * (m + 1));
+	
+	// for(int i = 0; i <= n; ++i){
+
+	// 	int start = Get_single_index(i, 0, m + 1);
+
+	// 	// interval == 1 since we are in teh y direction
+	// 	// restriction: children inderit parent's polynomial order. 
+	// 	Interpolate_to_new_points(m + 1,  m + 1, T_y,
+	// 			local::Hash_elem[p_key] -> holdmetrics.dely_deleta, middle, start, start, 1);
+	// }
+	
+
+	// // x direction
+	// for(int j = 0; j <= m; ++j){
+
+	// 	int start = Get_single_index(0, j, m + 1);
+
+	// 	Interpolate_to_new_points(n + 1,  n + 1, T_x,
+	// 			middle, c -> holdmetrics.dely_deleta, start, start, m + 1);
+		
+	// }
+
+	// middle.clear();
+
+
+	// //jacobian:
+	// // y direction
+	// middle = std::vector<double> ((n + 1) * (m + 1));
+	
+	// for(int i = 0; i <= n; ++i){
+
+	// 	int start = Get_single_index(i, 0, m + 1);
+
+	// 	// interval == 1 since we are in teh y direction
+	// 	// restriction: children inderit parent's polynomial order. 
+	// 	Interpolate_to_new_points(m + 1,  m + 1, T_y,
+	// 			local::Hash_elem[p_key] -> holdmetrics.jacobian, middle, start, start, 1);
+	// }
+	
+
+	// // x direction
+	// for(int j = 0; j <= m; ++j){
+
+	// 	int start = Get_single_index(0, j, m + 1);
+
+	// 	Interpolate_to_new_points(n + 1,  n + 1, T_x,
+	// 			middle, c -> holdmetrics.jacobian, start, start, m + 1);
+		
+	// }
+
+	// middle.clear();
+
+	// for(int j = 0; j <= m; j++){
+	// 	for(int i = 0; i <= n; i++){
+	// 		int num_p = Get_single_index(i, j, n + 1);
+	// 		c->holdmetrics.delx_delxi[num_p] *= 0.5;
+	// 		c->holdmetrics.dely_delxi[num_p] *= 0.5;
+	// 		c->holdmetrics.delx_deleta[num_p] *= 0.5;
+	// 		c->holdmetrics.dely_deleta[num_p] *= 0.5;
+	// 		c->holdmetrics.jacobian[num_p] *= 0.25;
+	// 	}
+	// }
 
 }
 
@@ -518,3 +1203,284 @@ void Interpolate_to_new_points(int m, int n, std::vector<double>& T,
 	}
 
 }
+
+void coarsetofine(std::vector<double> &target, int new_order, int currentorder, std::vector<double> &T){
+	int start_old = 0;
+	int start_new = 0;
+
+	std::vector<double> intermatrix =  std::vector<double>((new_order + 1) * (currentorder + 1));
+	
+	for(int i = 0; i <= (currentorder); ++i){
+		Interpolate_to_new_points(new_order + 1, currentorder + 1, T,
+				target, intermatrix, start_old, start_new, 1);
+
+		start_old += (currentorder + 1);
+		start_new += (new_order + 1);
+	}
+
+	target.clear();
+
+	start_old = 0;
+	start_new = 0;
+	
+	// allocate space
+	target = std::vector<double> ((new_order + 1) * (new_order + 1));
+
+	for(int j = 0; j <= new_order; ++j){
+		Interpolate_to_new_points(new_order + 1,  currentorder + 1, T,
+				intermatrix, target, start_old, start_new, new_order + 1);
+		
+		++start_old;
+		++start_new;
+	}
+}
+
+//m is new order, n is current order
+//works
+void coarsetofine1D(std::vector<double> &target, int new_order, int currentorder, const std::vector<double> &T){
+
+	//intermediate vector
+	std::vector<double> intermediate = std::vector<double> (target.size());
+
+	//copy over orignal data to intermediate
+	for(int i = 0; i < target.size(); i++){
+		intermediate[i] = target[i];
+	}
+
+	//reallocate space
+	target.clear();
+	target = std::vector<double> ((new_order + 1)*4);
+
+	for(int k = 0; k < 4; k++){
+
+		for(int i = 0; i <= new_order; i++){
+			double t = 0;
+			int ndx = Get_single_index(i, k, 4);
+
+			for(int j = 0; j <= currentorder; j++){
+				int indx = Get_single_index(i, j, currentorder + 1);
+
+				int odx = Get_single_index(j, k, 4);
+				
+				t += T[indx]*intermediate[odx];
+				// std::cout << intermediate[odx];
+			}
+
+			target[ndx] = t;
+		}
+
+	}
+	
+	
+}
+
+
+//dont allocate for fnew
+//poly order of nodes, number of new poitns-1, old x, old y, old solution, new x, new y, new soln
+void CoursetoFineInterp(int nold, int nnew, std::vector<double> &x, std::vector<double> &y, std::unordered_map<int, std::vector<double>> &f, 
+ std::vector<double> &xnew,  std::vector<double> &ynew, std::unordered_map<int, std::vector<double>> &fnew){
+
+	std::vector<double> T1;
+
+	Polynomial_interpolate_matrix(x, xnew, T1);
+
+	std::unordered_map<int, std::vector<double>> middle;	// intermidiate matrix
+
+	// y direction
+	for(int equ = 0; equ < dg_fun::num_of_equation; ++equ){
+		
+		int start_old{};
+		int start_new{};
+
+		middle[equ] = std::vector<double> ((nnew + 1) * (nold + 1));
+		
+		for(int i = 0; i <= nold; ++i){
+
+			// interval == 1 since we are in teh y direction
+			// restriction: children inderit parent's polynomial order. 
+			Interpolate_to_new_points(nnew+ 1, nold + 1, T1,
+					f[equ], middle[equ], start_old, start_new, 1);
+
+			start_old += (nold + 1);
+			start_new += (nnew + 1);
+			// ++start_old;
+			// ++start_new;
+		}
+
+	}
+
+	std::vector<double> T2;
+
+	Polynomial_interpolate_matrix(y, ynew, T2);
+
+	// x direction
+	for(int equ = 0; equ < dg_fun::num_of_equation; ++equ){
+
+		int start_old{};
+		int start_new{};
+		
+		// allocate space
+		fnew[equ] = std::vector<double> ((nnew + 1) * (nnew + 1));
+
+		for(int j = 0; j <= nnew; ++j){
+
+			Interpolate_to_new_points(nnew + 1, nold + 1, T2,
+					middle[equ], fnew[equ], start_old, start_new, nnew + 1);
+			
+			++start_old;
+			++start_new;
+			// start_old += (nold + 1);
+			// start_new += (nnew + 1);
+		}
+
+	}
+	
+		
+}
+
+
+//generate a linearly spaced array (vector)
+std::vector<double> linarray(double min, double max, int N){
+    std::vector<double> result;
+
+    double spacing = (max-min)/double(N-1);
+
+    for(int i = 0; i < N; i++) {
+        result.push_back(min + i * spacing);
+    }
+
+    return result;
+}
+
+
+//m is new order, n is current order
+//works
+void boundaryinterp1D(Unit* c, int n, int m){
+
+	//X Boundaries
+	for(int j = 0; j <= m; ++j ){
+
+			std::vector<double> x_array(n + 1);
+			std::vector<double> y_array(n + 1);
+
+			for(int i = 0; i <= n; ++i){
+
+				int nodei = Get_single_index(i, j, m + 1);
+
+				x_array[i] = c->holdmetrics.x_node[nodei];
+				y_array[i] = c->holdmetrics.y_node[nodei];
+			}
+
+			int boundaryindex1 = Get_single_index(j, 1, 4);
+			int boundaryindex3 = Get_single_index(j, 3, 4);
+
+			double xl = Interpolate_to_boundary(n, x_array, nodal::lagrange_l[n]);
+			double xr = Interpolate_to_boundary(n, x_array, nodal::lagrange_r[n]);
+
+			c->holdmetrics.x_boundary[boundaryindex3] = xl;
+			c->holdmetrics.x_boundary[boundaryindex1] = xr;
+
+			
+
+			double yl = Interpolate_to_boundary(n, y_array, nodal::lagrange_l[n]);
+			double yr = Interpolate_to_boundary(n, y_array, nodal::lagrange_r[n]);
+
+			c->holdmetrics.y_boundary[boundaryindex3] = yl;
+			c->holdmetrics.y_boundary[boundaryindex1] = yr;
+
+
+
+	}
+	
+
+	//Y Boundaires
+	for(int i = 0; i <= n; ++i ){
+
+			std::vector<double> x_array(m + 1);
+			std::vector<double> y_array(m + 1);
+
+			for(int j = 0; j <= m; ++j){
+
+				int nodei = Get_single_index(i, j, m + 1);
+
+				x_array[j] = c->holdmetrics.x_node[nodei];
+				y_array[j] = c->holdmetrics.y_node[nodei];
+
+			}
+
+			int boundaryindex0 = Get_single_index(i, 0, 4);
+			int boundaryindex2 = Get_single_index(i, 2, 4);
+
+			//check interpolate to boundary outputs
+			c->holdmetrics.x_boundary[boundaryindex0] = Interpolate_to_boundary(n, x_array, nodal::lagrange_l[n]);
+			c->holdmetrics.x_boundary[boundaryindex2] = Interpolate_to_boundary(n, x_array, nodal::lagrange_r[n]);
+
+			c->holdmetrics.y_boundary[boundaryindex0] = Interpolate_to_boundary(n, y_array, nodal::lagrange_l[n]);
+			c->holdmetrics.y_boundary[boundaryindex2] = Interpolate_to_boundary(n, y_array, nodal::lagrange_r[n]);	
+	}
+
+}
+
+//dont allocate for fnew
+//poly order of nodes, number of new poitns-1, old x, old y, old solution, new x, new y, new soln
+void CoursetoFineInterpCoords(int nold, int nnew, std::vector<double> &x, std::vector<double> &y, std::unordered_map<int, std::vector<double>> &f, 
+ std::vector<double> &xnew,  std::vector<double> &ynew, std::unordered_map<int, std::vector<double>> &fnew){
+
+	std::vector<double> T1;
+
+	Polynomial_interpolate_matrix(x, xnew, T1);
+
+	std::unordered_map<int, std::vector<double>> middle;	// intermidiate matrix
+
+	// y direction
+	for(int equ = 0; equ < 2; ++equ){
+		
+		int start_old{};
+		int start_new{};
+
+		middle[equ] = std::vector<double> ((nnew + 1) * (nold + 1));
+		
+		for(int i = 0; i <= nold; ++i){
+
+			// interval == 1 since we are in teh y direction
+			// restriction: children inderit parent's polynomial order. 
+			Interpolate_to_new_points(nnew+ 1, nold + 1, T1,
+					f[equ], middle[equ], start_old, start_new, 1);
+
+			start_old += (nold + 1);
+			start_new += (nnew + 1);
+			// ++start_old;
+			// ++start_new;
+		}
+
+	}
+
+	std::vector<double> T2;
+
+	Polynomial_interpolate_matrix(y, ynew, T2);
+
+	// x direction
+	for(int equ = 0; equ < 2; ++equ){
+
+		int start_old{};
+		int start_new{};
+		
+		// allocate space
+		fnew[equ] = std::vector<double> ((nnew + 1) * (nnew + 1));
+
+		for(int j = 0; j <= nnew; ++j){
+
+			Interpolate_to_new_points(nnew + 1, nold + 1, T2,
+					middle[equ], fnew[equ], start_old, start_new, nnew + 1);
+			
+			++start_old;
+			++start_new;
+			// start_old += (nold + 1);
+			// start_new += (nnew + 1);
+		}
+
+	}
+	
+		
+}
+

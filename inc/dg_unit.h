@@ -4,6 +4,7 @@
 #include <vector>
 #include <unordered_map>
 //#include <array>
+#include "dg_mapped_geometry_class.h"
 
 
 /// @brief
@@ -76,6 +77,7 @@ public:
 	// constructor (default)
 	Unit();
 
+	MappedGeometry holdmetrics;
 		
 };
 
