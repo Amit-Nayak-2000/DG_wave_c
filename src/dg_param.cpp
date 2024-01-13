@@ -65,8 +65,10 @@ namespace dg_time{
 	// const int nt = 200000;
 
 	// //acoustic scatter time
-	const double t_total = 3;
-	const int nt = 60000;
+	// const double t_total = 3;
+	// const int nt = 60000;
+	const double t_total = 1.0e-3;
+	const int nt = 20;
 
 };
 

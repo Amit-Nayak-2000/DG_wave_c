@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Bring the headers
 include_directories(inc)
+# include_directories(/Applications/TAU/tau/include)
 
 # source file
 file(GLOB SOURCES "src/*.cpp")
