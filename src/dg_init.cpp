@@ -27,9 +27,9 @@ void DG_init(){
 	double PI = 4.0 * atan(1.0); 
 	double rinf = 5.0;
 	double ro = 0.5; //originally 0.5
-	double w = 0.125; // originally 0.125
-	double xs = 1.0; //originally 1.5
-	double ys = 0.0; //originally 0.0
+	double w = 0.04; // originally 0.125
+	double xs = -1; //originally 1.5
+	double ys = -0.65; //originally 0.0
 
 	std::vector<double> one_x(grid::nmin+1);
 	std::vector<double> one_y(grid::nmin+1);
@@ -42,17 +42,17 @@ void DG_init(){
 
 	for(int p = 0; p <= grid::nmin; p++){
 		// reference square 
-		// one_x[p] = 1*nodal::gl_points[grid::nmin][p];
-		// one_y[p] = -1; 
+		one_x[p] = 1*nodal::gl_points[grid::nmin][p];
+		one_y[p] = -1; 
 
-		// two_x[p] = 1; 
-		// two_y[p] = 1*nodal::gl_points[grid::nmin][p];
+		two_x[p] = 1; 
+		two_y[p] = 1*nodal::gl_points[grid::nmin][p];
 
-		// three_x[p] = 1*nodal::gl_points[grid::nmin][p];
-		// three_y[p] = 1; 
+		three_x[p] = 1*nodal::gl_points[grid::nmin][p];
+		three_y[p] = 1; 
 
-		// four_x[p] = -1; 
-		// four_y[p] = 1*nodal::gl_points[grid::nmin][p];
+		four_x[p] = -1; 
+		four_y[p] = 1*nodal::gl_points[grid::nmin][p];
 
 
 		//bumpy lower boundary
@@ -70,17 +70,17 @@ void DG_init(){
 
 
 		// half annulus
-		one_x[p] = ro + (rinf - ro)*(nodal::gl_points[grid::nmin][p]+1)/2;
-		one_y[p] = 0; 
+		// one_x[p] = ro + (rinf - ro)*(nodal::gl_points[grid::nmin][p]+1)/2;
+		// one_y[p] = 0; 
 
-		two_x[p] = rinf*std::cos(PI*(nodal::gl_points[grid::nmin][p]+1)/2); 
-		two_y[p] = rinf*std::sin(PI*(nodal::gl_points[grid::nmin][p]+1)/2); 
+		// two_x[p] = rinf*std::cos(PI*(nodal::gl_points[grid::nmin][p]+1)/2); 
+		// two_y[p] = rinf*std::sin(PI*(nodal::gl_points[grid::nmin][p]+1)/2); 
 
-		three_x[p] = -ro - (rinf - ro)*(nodal::gl_points[grid::nmin][p]+1)/2; 
-		three_y[p] = 0;
+		// three_x[p] = -ro - (rinf - ro)*(nodal::gl_points[grid::nmin][p]+1)/2; 
+		// three_y[p] = 0;
 
-		four_x[p] = ro*std::cos(PI*(nodal::gl_points[grid::nmin][p]+1)/2); 
-		four_y[p] = ro*std::sin(PI*(nodal::gl_points[grid::nmin][p]+1)/2);
+		// four_x[p] = ro*std::cos(PI*(nodal::gl_points[grid::nmin][p]+1)/2); 
+		// four_y[p] = ro*std::sin(PI*(nodal::gl_points[grid::nmin][p]+1)/2);
 
 		
 
@@ -231,6 +231,15 @@ void DG_init(){
 				temp -> solution[1][num_p] = 0;
 				//v = 0
 				temp -> solution[2][num_p] = 0;
+				//----------------------------------------------------------------------------------------
+
+				// test case planar acoustic scattering --------------------------------------------------
+				// p = exp( -ln(2)*( ((x-xs)^2 + y^2)/w^2 )
+				// temp -> solution[0][num_p] = exp( -log(2) * ( (std::pow((temp->holdmetrics.x_node[num_p] - xs), 2) ) / std::pow(w, 2) ) );
+				// // u = p;
+				// temp -> solution[1][num_p] = exp( -log(2) * ( (std::pow((temp->holdmetrics.x_node[num_p] - xs), 2) ) / std::pow(w, 2) ) );
+				// // v = 0;
+				// temp -> solution[2][num_p] = 0;
 				//----------------------------------------------------------------------------------------
 
 			}

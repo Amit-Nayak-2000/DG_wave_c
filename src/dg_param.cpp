@@ -8,7 +8,7 @@
 /// @param fileplace The path of mesh file and mesh file name
 /// @param output_place output directory. 
 namespace fileinfo{
-	const std::string fileplace = "../gmsh_files/64_elements.msh";
+	const std::string fileplace = "../gmsh_files/256_elements.msh";
 	// const std::string fileplace = "../gmsh_files/1element.msh";
 //	const std::string fileplace = "../gmsh_files/strong/1024.msh";
 
@@ -32,16 +32,16 @@ namespace fileinfo{
 /// @param nmax maximum polynomial degree in x and y direction
 /// @param hlevel_max maximum h-refinement level. 
 namespace grid{
-	const int exp_x = 3; 
-	const int exp_y = 3; 
+	const int exp_x = 4; 
+	const int exp_y = 4; 
 	
 	const double gx_l = 0.0;
 	const double gx_r = 1.0; 
 	const double gy_l = 0.0;
 	const double gy_r = 1.0; 
 
-	const int nmin = 6;	
-	const int nmax = 16;
+	const int nmin = 8;	
+	const int nmax = 12;
 
 	const int hlevel_max = 2;	
 };
@@ -59,16 +59,19 @@ namespace dg_time{
 	//wave
 	// const double t_total = 1.0e-2* 5;
 	// const int nt = 5000;
+	// const double t_total = 0.5;
+	// const int nt = 50000;
+
 
 	//curved channel
 	// const double t_total = 200*1.0e-2;
 	// const int nt = 200000;
 
 	// //acoustic scatter time
-	// const double t_total = 3;
-	// const int nt = 60000;
-	const double t_total = 1.0e-3;
-	const int nt = 20;
+	const double t_total = 3;
+	const int nt = 60000;
+	// const double t_total = 1.0e-3;
+	// const int nt = 20;
 
 };
 
@@ -102,9 +105,9 @@ namespace dg_refine{
 
 	const double tolerance_min = 1.0e-4; // originally e-6
 
-	const double tolerance_max = 1.0e-7;  // originally e-10
+	const double tolerance_max = 1.0e-9;  // originally e-10
 
-	const bool load_balancing = true;
+	const bool load_balancing = false;
 
 };
 

@@ -58,7 +58,44 @@ void DG_step_by_RK3(double tn, double delta_t){
 						temp ->G[l][nodei] = am[k] * ( temp -> G[l][nodei]) + 
 									(temp -> solution_time_der)[l][nodei];
 
-						(temp -> solution)[l][nodei] += gm[k] * delta_t * (temp -> G[l][nodei]);
+						//Brinkman volume penalization (Naively speaking setting u and v close to 0)
+						if(l > 0){
+							double phi = 1.0;
+							double beta = 0.0000001;
+							double eta = phi*phi*beta*beta;
+							double IB;
+							if (temp->holdmetrics.y_node[nodei] <= -0.8){ //wall at 0.5
+								if(temp->holdmetrics.x_node[nodei] <= -0.8 && temp->holdmetrics.x_node[nodei] >= -1){
+									IB = 1.0;
+								}
+								else if (temp->holdmetrics.x_node[nodei] <= -0.4 && temp->holdmetrics.x_node[nodei] >= -0.6){
+									IB = 1.0;
+								}
+								else if (temp->holdmetrics.x_node[nodei] <= 0 && temp->holdmetrics.x_node[nodei] >= -0.2){
+									IB = 1.0;
+								}
+								else if (temp->holdmetrics.x_node[nodei] <= 0.4 && temp->holdmetrics.x_node[nodei] >= 0.2){
+									IB = 1.0;
+								}
+								else if (temp->holdmetrics.x_node[nodei] <= 0.8 && temp->holdmetrics.x_node[nodei] >= 0.6){
+									IB = 1.0;
+								}
+								else{
+									IB = 0.0;
+								}
+							}
+							else{
+								IB = 0.0;
+							}
+
+							(temp -> solution)[l][nodei] += (gm[k] * delta_t * (temp -> G[l][nodei]))/(1+ IB*delta_t/eta);
+
+
+						}
+						else{
+							(temp -> solution)[l][nodei] += gm[k] * delta_t * (temp -> G[l][nodei]);
+						}
+						// (temp -> solution)[l][nodei] += gm[k] * delta_t * (temp -> G[l][nodei]);
 					}
 
 				}
