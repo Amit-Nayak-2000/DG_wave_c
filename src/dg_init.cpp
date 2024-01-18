@@ -27,9 +27,9 @@ void DG_init(){
 	double PI = 4.0 * atan(1.0); 
 	double rinf = 5.0;
 	double ro = 0.5; //originally 0.5
-	double w = 0.04; // originally 0.125
-	double xs = -1; //originally 1.5
-	double ys = -0.65; //originally 0.0
+	double w = 0.125; // originally 0.125
+	double xs = 1.5; //originally 1.5
+	double ys = 0.0; //originally 0.0
 
 	std::vector<double> one_x(grid::nmin+1);
 	std::vector<double> one_y(grid::nmin+1);
@@ -41,18 +41,18 @@ void DG_init(){
 	std::vector<double> four_y(grid::nmin+1);
 
 	for(int p = 0; p <= grid::nmin; p++){
-		// reference square 
-		one_x[p] = 1*nodal::gl_points[grid::nmin][p];
-		one_y[p] = -1; 
+		// // reference square 
+		// one_x[p] = 1*nodal::gl_points[grid::nmin][p];
+		// one_y[p] = -1; 
 
-		two_x[p] = 1; 
-		two_y[p] = 1*nodal::gl_points[grid::nmin][p];
+		// two_x[p] = 1; 
+		// two_y[p] = 1*nodal::gl_points[grid::nmin][p];
 
-		three_x[p] = 1*nodal::gl_points[grid::nmin][p];
-		three_y[p] = 1; 
+		// three_x[p] = 1*nodal::gl_points[grid::nmin][p];
+		// three_y[p] = 1; 
 
-		four_x[p] = -1; 
-		four_y[p] = 1*nodal::gl_points[grid::nmin][p];
+		// four_x[p] = -1; 
+		// four_y[p] = 1*nodal::gl_points[grid::nmin][p];
 
 
 		//bumpy lower boundary
@@ -97,7 +97,18 @@ void DG_init(){
 		// four_x[p] = -3/2; 
 		// four_y[p] = (0.155*(std::tanh(3) + 1 ))*nodal::gl_points[grid::nmin][p];
 
-		
+		// Rectangle
+		one_x[p] = 5*nodal::gl_points[grid::nmin][p];
+		one_y[p] = 0; 
+
+		two_x[p] = 5; 
+		two_y[p] = 5*(nodal::gl_points[grid::nmin][p] + 1)/2;
+
+		three_x[p] = 5*nodal::gl_points[grid::nmin][p];
+		three_y[p] = 5; 
+
+		four_x[p] = -5; 
+		four_y[p] = 5*(nodal::gl_points[grid::nmin][p] + 1)/2;
 
 
 	}

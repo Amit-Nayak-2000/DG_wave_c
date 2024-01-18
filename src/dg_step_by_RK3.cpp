@@ -5,6 +5,7 @@
 #include "dg_param.h"
 #include "dg_single_index.h"
 #include <iostream>	// test
+#include <cmath>
 
 /// @brief
 /// The integration in time by using low storage third order Runge-Kutta.  
@@ -34,6 +35,7 @@ void DG_step_by_RK3(double tn, double delta_t){
 		temp = temp -> next;
 	}
 
+	double phi, beta,  eta, IB;
 	
 	// thrid order RK
 	for(int k = 0; k < 3; ++k){
@@ -60,33 +62,40 @@ void DG_step_by_RK3(double tn, double delta_t){
 
 						//Brinkman volume penalization (Naively speaking setting u and v close to 0)
 						if(l > 0){
-							double phi = 1.0;
-							double beta = 0.0000001;
-							double eta = phi*phi*beta*beta;
-							double IB;
-							if (temp->holdmetrics.y_node[nodei] <= -0.8){ //wall at 0.5
-								if(temp->holdmetrics.x_node[nodei] <= -0.8 && temp->holdmetrics.x_node[nodei] >= -1){
-									IB = 1.0;
-								}
-								else if (temp->holdmetrics.x_node[nodei] <= -0.4 && temp->holdmetrics.x_node[nodei] >= -0.6){
-									IB = 1.0;
-								}
-								else if (temp->holdmetrics.x_node[nodei] <= 0 && temp->holdmetrics.x_node[nodei] >= -0.2){
-									IB = 1.0;
-								}
-								else if (temp->holdmetrics.x_node[nodei] <= 0.4 && temp->holdmetrics.x_node[nodei] >= 0.2){
-									IB = 1.0;
-								}
-								else if (temp->holdmetrics.x_node[nodei] <= 0.8 && temp->holdmetrics.x_node[nodei] >= 0.6){
-									IB = 1.0;
-								}
-								else{
-									IB = 0.0;
-								}
+							phi = 1.0;
+							beta = 0.0000001;
+							eta = phi*phi*beta*beta;
+
+							if (std::sqrt(pow(temp->holdmetrics.x_node[nodei], 2) + pow(temp->holdmetrics.y_node[nodei], 2))  <= 0.5){
+								IB = 1.0;
 							}
 							else{
 								IB = 0.0;
 							}
+							// if (temp->holdmetrics.y_node[nodei] <= -0.8){ //wall at 0.5
+							// 	if(temp->holdmetrics.x_node[nodei] <= -0.8 && temp->holdmetrics.x_node[nodei] >= -1){
+							// 		IB = 1.0;
+							// 	}
+							// 	else if (temp->holdmetrics.x_node[nodei] <= -0.4 && temp->holdmetrics.x_node[nodei] >= -0.6){
+							// 		IB = 1.0;
+							// 	}
+							// 	else if (temp->holdmetrics.x_node[nodei] <= 0 && temp->holdmetrics.x_node[nodei] >= -0.2){
+							// 		IB = 1.0;
+							// 	}
+							// 	else if (temp->holdmetrics.x_node[nodei] <= 0.4 && temp->holdmetrics.x_node[nodei] >= 0.2){
+							// 		IB = 1.0;
+							// 	}
+							// 	else if (temp->holdmetrics.x_node[nodei] <= 0.8 && temp->holdmetrics.x_node[nodei] >= 0.6){
+							// 		IB = 1.0;
+							// 	}
+							// 	else{
+							// 		IB = 0.0;
+							// 	}
+							// }
+							// else{
+							// 	IB = 0.0;
+							// }
+
 
 							(temp -> solution)[l][nodei] += (gm[k] * delta_t * (temp -> G[l][nodei]))/(1+ IB*delta_t/eta);
 
