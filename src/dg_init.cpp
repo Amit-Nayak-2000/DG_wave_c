@@ -27,8 +27,8 @@ void DG_init(){
 	double PI = 4.0 * atan(1.0); 
 	double rinf = 5.0;
 	double ro = 0.5; //originally 0.5
-	double w = 0.125; // originally 0.125
-	double xs = 1.5; //originally 1.5
+	double w = 0.2; // originally 0.125
+	double xs = 4.0; //originally 1.5, 4.0 NASA
 	double ys = 0.0; //originally 0.0
 
 	std::vector<double> one_x(grid::nmin+1);
@@ -98,17 +98,17 @@ void DG_init(){
 		// four_y[p] = (0.155*(std::tanh(3) + 1 ))*nodal::gl_points[grid::nmin][p];
 
 		// Rectangle
-		one_x[p] = 5*nodal::gl_points[grid::nmin][p];
+		one_x[p] = 10*nodal::gl_points[grid::nmin][p];
 		one_y[p] = 0; 
 
-		two_x[p] = 5; 
-		two_y[p] = 5*(nodal::gl_points[grid::nmin][p] + 1)/2;
+		two_x[p] = 10; 
+		two_y[p] = 10*(nodal::gl_points[grid::nmin][p] + 1)/2;
 
-		three_x[p] = 5*nodal::gl_points[grid::nmin][p];
-		three_y[p] = 5; 
+		three_x[p] = 10*nodal::gl_points[grid::nmin][p];
+		three_y[p] = 10; 
 
-		four_x[p] = -5; 
-		four_y[p] = 5*(nodal::gl_points[grid::nmin][p] + 1)/2;
+		four_x[p] = -10; 
+		four_y[p] = 10*(nodal::gl_points[grid::nmin][p] + 1)/2;
 
 
 	}
