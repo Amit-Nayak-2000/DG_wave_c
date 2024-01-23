@@ -25,10 +25,10 @@ void DG_init(){
 
 	//Building global bounds
 	double PI = 4.0 * atan(1.0); 
-	double rinf = 5.0;
+	double rinf = 10.0;
 	double ro = 0.5; //originally 0.5
-	double w = 0.125; // originally 0.125
-	double xs = 1.0; //originally 1.5
+	double w = 0.2; // originally 0.125
+	double xs = 4.0; //originally 1.5
 	double ys = 0.0; //originally 0.0
 
 	std::vector<double> one_x(grid::nmin+1);
