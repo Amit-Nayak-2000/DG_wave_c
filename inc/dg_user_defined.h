@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include "dg_unit.h"
 
 // user defined variable-------------------------------
 namespace user{
@@ -24,4 +25,6 @@ void Exact_solution_Gaussian2(int n, int m, double x_l, double y_d,
 
 void Exact_solution_sin(int n, int m, double x_l, double y_d,
 				double del_x, double del_y, std::unordered_map<int, std::vector<double>>& e, double t);
+
+void Exact_solution_wallbounce(Unit *temp, std::unordered_map<int, std::vector<double>>& e);
 #endif

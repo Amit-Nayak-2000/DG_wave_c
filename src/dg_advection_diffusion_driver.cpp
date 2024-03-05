@@ -51,11 +51,15 @@ void Driver_for_DG_approximation(){
 	Construct_data_type();
 	
 	// time integration
+	double wallpos = 0.0;
+	double wallvel = 0.0;
 	for(int k = 0; k < dg_time::nt; ++k){
 
-		DG_step_by_RK3(tn, delta_t);
+		DG_step_by_RK3(tn, delta_t, wallpos, wallvel);
 		
 		tn = (k + 1) * delta_t;
+
+		wallpos += wallvel*delta_t;
 
 		// output control
 		if(dg_io::io){

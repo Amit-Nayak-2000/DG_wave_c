@@ -201,9 +201,9 @@ void Numerical_flux_x(double t){
 					// ----------------------------------------------------------------------------------
 					
 					// wall boundary conditions -----------------------------------------------------------------------------
-					// External_state_reflect(temp -> solution_int_l, solution_ext, index, temp->holdmetrics.boundary_normal[LeftIndex], temp->holdmetrics.boundary_normal_y[LeftIndex]);
+					External_state_reflect(temp -> solution_int_l, solution_ext, index, temp->holdmetrics.boundary_normal[LeftIndex], temp->holdmetrics.boundary_normal_y[LeftIndex]);
 					// Radiation Boundary Condition ------------------------------------------------
-					External_state_radiation(temp -> solution_int_l, solution_ext, index);
+					// External_state_radiation(temp -> solution_int_l, solution_ext, index);
 					// -----------------------------------------------------------------------------
 					// ----------------------------------------------------------------------------------
 
@@ -391,10 +391,10 @@ void Numerical_flux_x(double t){
 				// External_state_Gaussian_exact(t, temp->holdmetrics.x_boundary[RightIndex], temp->holdmetrics.y_boundary[RightIndex], solution_ext, index);
 				// ----------------------------------------------------------------------------------
 				// wall boundary conditions -----------------------------------------------------------------------------
-				// External_state_reflect(temp -> solution_int_r, solution_ext, index, temp->holdmetrics.boundary_normal[RightIndex], temp->holdmetrics.boundary_normal_y[RightIndex]);
+				External_state_reflect(temp -> solution_int_r, solution_ext, index, temp->holdmetrics.boundary_normal[RightIndex], temp->holdmetrics.boundary_normal_y[RightIndex]);
 				// Radiation Boundary Condition ------------------------------------------------
 				// Radiation Boundary Condition ------------------------------------------------
-				External_state_radiation(temp -> solution_int_r, solution_ext, index); //usually this
+				// External_state_radiation(temp -> solution_int_r, solution_ext, index); //usually this
 				// -----------------------------------------------------------------------------
 
 				//External_mirror_right_boundary(t, temp -> xcoords[1], y, solution_ext, index);
@@ -922,10 +922,10 @@ void Numerical_flux_y(double t){
 				//------------------------------------------------------------------------------------
 
 				// wall boundary conditions------------------------------------------------------
-				// External_state_reflect(temp -> solution_int_r, solution_ext, index, temp->holdmetrics.boundary_normal[TopIndex], temp->holdmetrics.boundary_normal_y[TopIndex]);
+				External_state_reflect(temp -> solution_int_r, solution_ext, index, temp->holdmetrics.boundary_normal[TopIndex], temp->holdmetrics.boundary_normal_y[TopIndex]);
 
 				// Radiation Boundary Condition ------------------------------------------------
-				External_state_radiation(temp -> solution_int_r, solution_ext, index);
+				// External_state_radiation(temp -> solution_int_r, solution_ext, index);
 				// -----------------------------------------------------------------------------
 				// ----------------------------------------------------------------------------------
 

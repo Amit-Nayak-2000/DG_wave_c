@@ -27,8 +27,8 @@ void DG_init(){
 	double PI = 4.0 * atan(1.0); 
 	double rinf = 5.0;
 	double ro = 0.5; //originally 0.5
-	double w = 0.2; // originally 0.125
-	double xs = 4.0; //originally 1.5, 4.0 NASA
+	double w = 0.063; // originally 0.125
+	double xs = -0.25; //originally 1.5, 4.0 NASA
 	double ys = 0.0; //originally 0.0
 
 	std::vector<double> one_x(grid::nmin+1);
@@ -41,18 +41,18 @@ void DG_init(){
 	std::vector<double> four_y(grid::nmin+1);
 
 	for(int p = 0; p <= grid::nmin; p++){
-		// // reference square 
-		// one_x[p] = 1*nodal::gl_points[grid::nmin][p];
-		// one_y[p] = -1; 
+		// reference square 
+		one_x[p] = 1*nodal::gl_points[grid::nmin][p];
+		one_y[p] = -1; 
 
-		// two_x[p] = 1; 
-		// two_y[p] = 1*nodal::gl_points[grid::nmin][p];
+		two_x[p] = 1; 
+		two_y[p] = 1*nodal::gl_points[grid::nmin][p];
 
-		// three_x[p] = 1*nodal::gl_points[grid::nmin][p];
-		// three_y[p] = 1; 
+		three_x[p] = 1*nodal::gl_points[grid::nmin][p];
+		three_y[p] = 1; 
 
-		// four_x[p] = -1; 
-		// four_y[p] = 1*nodal::gl_points[grid::nmin][p];
+		four_x[p] = -1; 
+		four_y[p] = 1*nodal::gl_points[grid::nmin][p];
 
 
 		//bumpy lower boundary
@@ -98,17 +98,17 @@ void DG_init(){
 		// four_y[p] = (0.155*(std::tanh(3) + 1 ))*nodal::gl_points[grid::nmin][p];
 
 		// Rectangle
-		one_x[p] = 10*nodal::gl_points[grid::nmin][p];
-		one_y[p] = 0; 
+		// one_x[p] = 10*nodal::gl_points[grid::nmin][p];
+		// one_y[p] = 0; 
 
-		two_x[p] = 10; 
-		two_y[p] = 10*(nodal::gl_points[grid::nmin][p] + 1)/2;
+		// two_x[p] = 10; 
+		// two_y[p] = 10*(nodal::gl_points[grid::nmin][p] + 1)/2;
 
-		three_x[p] = 10*nodal::gl_points[grid::nmin][p];
-		three_y[p] = 10; 
+		// three_x[p] = 10*nodal::gl_points[grid::nmin][p];
+		// three_y[p] = 10; 
 
-		four_x[p] = -10; 
-		four_y[p] = 10*(nodal::gl_points[grid::nmin][p] + 1)/2;
+		// four_x[p] = -10; 
+		// four_y[p] = 10*(nodal::gl_points[grid::nmin][p] + 1)/2;
 
 
 	}
@@ -236,21 +236,21 @@ void DG_init(){
 
 				// test case acoustic scattering --------------------------------------------------
 				// p = exp( -ln(2)*( ((x-xs)^2 + y^2)/w^2 )
-				temp -> solution[0][num_p] = exp( -log(2) * ( (std::pow((temp->holdmetrics.x_node[num_p] - xs), 2) + std::pow((temp->holdmetrics.y_node[num_p] - ys), 2) ) / std::pow(w, 2) ) );
-				// std::cout << temp ->solution[0][num_p] << std::endl;
-				//u = 0
-				temp -> solution[1][num_p] = 0;
-				//v = 0
-				temp -> solution[2][num_p] = 0;
+				// temp -> solution[0][num_p] = exp( -log(2) * ( (std::pow((temp->holdmetrics.x_node[num_p] - xs), 2) + std::pow((temp->holdmetrics.y_node[num_p] - ys), 2) ) / std::pow(w, 2) ) );
+				// // std::cout << temp ->solution[0][num_p] << std::endl;
+				// //u = 0
+				// temp -> solution[1][num_p] = 0;
+				// //v = 0
+				// temp -> solution[2][num_p] = 0;
 				//----------------------------------------------------------------------------------------
 
 				// test case planar acoustic scattering --------------------------------------------------
 				// p = exp( -ln(2)*( ((x-xs)^2 + y^2)/w^2 )
-				// temp -> solution[0][num_p] = exp( -log(2) * ( (std::pow((temp->holdmetrics.x_node[num_p] - xs), 2) ) / std::pow(w, 2) ) );
-				// // u = p;
-				// temp -> solution[1][num_p] = exp( -log(2) * ( (std::pow((temp->holdmetrics.x_node[num_p] - xs), 2) ) / std::pow(w, 2) ) );
-				// // v = 0;
-				// temp -> solution[2][num_p] = 0;
+				temp -> solution[0][num_p] = 1e-03*exp( -log(2) * ( (std::pow((temp->holdmetrics.x_node[num_p] - xs), 2) ) / std::pow(w, 2) ) );
+				// u = p;
+				temp -> solution[1][num_p] = 1e-03*exp( -log(2) * ( (std::pow((temp->holdmetrics.x_node[num_p] - xs), 2) ) / std::pow(w, 2) ) );
+				// v = 0;
+				temp -> solution[2][num_p] = 0;
 				//----------------------------------------------------------------------------------------
 
 			}

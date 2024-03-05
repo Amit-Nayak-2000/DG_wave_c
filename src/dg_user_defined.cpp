@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_map>
 #include "dg_kx_ky.h"
+#include "dg_unit.h"
 
 // Global variables
 namespace user{
@@ -117,4 +118,15 @@ void Exact_solution_sin(int n, int m, double x_l, double y_d,
 	}
 	
 
+}
+
+void Exact_solution_wallbounce(Unit *temp, std::unordered_map<int, std::vector<double>>& e){
+	for (int j = 0; j <= temp->m; ++j){
+		for(int i = 0; i <= temp->n; ++i){
+			int nodei = Get_single_index(i, j, temp->m + 1);
+			e[0][nodei] = 1e-03*exp( -log(2) * ( (std::pow((temp->holdmetrics.x_node[nodei] - 0.25), 2) ) / std::pow(0.063, 2) ) );
+			e[1][nodei] = -1e-03*exp( -log(2) * ( (std::pow((temp->holdmetrics.x_node[nodei] - 0.25), 2) ) / std::pow(0.063, 2) ) );
+			e[2][nodei] = 0.0;
+		}
+	}
 }

@@ -13,6 +13,7 @@
 #include <fstream>	// read and write to file
 #include <iomanip>	// std::setfill
 #include <iostream>	// test
+#include "dg_single_index.h"
 
 // global elem -----------------
 int g_elem{};
@@ -49,8 +50,9 @@ void Get_error(){
 		double del_y = (temp -> ycoords[1]) - (temp -> ycoords[0]);  
 
 		// wave ---------------------------------------------------------------------------------------		
-		Exact_solution_Gaussian(temp -> n, temp -> m, temp -> xcoords[0], temp -> ycoords[0], 
-					del_x, del_y, result::exact, dg_time::t_total);
+		// Exact_solution_Gaussian(temp -> n, temp -> m, temp -> xcoords[0], temp -> ycoords[0], 
+		// 			del_x, del_y, result::exact, dg_time::t_total);
+		Exact_solution_wallbounce(temp, result::exact);
 //		Exact_solution_Gaussian2(temp -> n, temp -> m, temp -> xcoords[0], temp -> ycoords[0], 
 //					del_x, del_y, result::exact, dg_time::t_total);
 		// --------------------------------------------------------------------------------------------
@@ -70,8 +72,17 @@ void Get_error(){
 
 				for(int j = 0; j <= temp -> m; ++j){
 
-					result::error[equ][nodei] = std::abs(result::exact[equ][nodei] 
-									- temp -> solution[equ][nodei]);
+					int doubleindex = Get_single_index(i, j, temp->m + 1);
+
+					if(temp->holdmetrics.x_node[doubleindex] > 0.0){ //out of bounds of consideration
+						result::error[equ][nodei] = 0.0;
+					}
+					else{
+						result::error[equ][nodei] = std::abs(result::exact[equ][nodei] - temp -> solution[equ][nodei]);
+					}
+
+					// result::error[equ][nodei] = std::abs(result::exact[equ][nodei] 
+					// 				- temp -> solution[equ][nodei]);
 	
 					result::L2_norm[equ] += result::error[equ][nodei] * result::error[equ][nodei]
 								* nodal::gl_weights[temp -> m][j] * weight_x
@@ -96,7 +107,7 @@ void Get_error(){
 	MPI_Reduce(&result::L2_norm[0], &L2_recv[0], dg_fun::num_of_equation, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	
 	if(mpi::rank == 0){
-		//std::cout.precision(17);
+		std::cout.precision(17);
 		for(int equ = 0; equ < dg_fun::num_of_equation; ++equ){
 			result::L2_norm[equ] = sqrt(L2_recv[equ]);
 //			std::cout<< std::fixed <<result::L2_norm[equ] << "\n";

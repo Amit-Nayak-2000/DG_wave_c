@@ -8,7 +8,7 @@
 /// @param fileplace The path of mesh file and mesh file name
 /// @param output_place output directory. 
 namespace fileinfo{
-	const std::string fileplace = "../gmsh_files/64x64.msh";
+	const std::string fileplace = "../gmsh_files/1024_elements_small.msh";
 	// const std::string fileplace = "../gmsh_files/1element.msh";
 //	const std::string fileplace = "../gmsh_files/strong/1024.msh";
 
@@ -32,18 +32,18 @@ namespace fileinfo{
 /// @param nmax maximum polynomial degree in x and y direction
 /// @param hlevel_max maximum h-refinement level. 
 namespace grid{
-	const int exp_x = 6; 
-	const int exp_y = 6; 
+	const int exp_x = 5; 
+	const int exp_y = 5; 
 	
 	const double gx_l = 0.0;
 	const double gx_r = 1.0; 
 	const double gy_l = 0.0;
 	const double gy_r = 1.0; 
 
-	const int nmin = 6;	
-	const int nmax = 12;
+	const int nmin = 5;	
+	const int nmax = 17;
 
-	const int hlevel_max = 3;	
+	const int hlevel_max = 1;	
 };
 //---------------------------------------------------------------------
 
@@ -59,8 +59,8 @@ namespace dg_time{
 	//wave
 	// const double t_total = 1.0e-2* 5;
 	// const int nt = 5000;
-	// const double t_total = 0.5;
-	// const int nt = 50000;
+	const double t_total = 0.5;
+	const int nt = 10000;
 
 
 	//curved channel
@@ -72,8 +72,8 @@ namespace dg_time{
 	// const int nt = 60000;
 
 	// //acoustic NASA scatter time
-	const double t_total = 10;
-	const int nt = 200000;
+	// const double t_total = 10;
+	// const int nt = 200000;
 	// const double t_total = 1.0e-3;
 	// const int nt = 20;
 
@@ -101,7 +101,7 @@ namespace dg_fun{
 /// @param load_balaning Repartitioning switch. 
 namespace dg_refine{
 
-	const bool adapt = true;
+	const bool adapt = false;
 
 	const int refine_frequency = 1;	// every time step refine once
 
@@ -125,7 +125,7 @@ namespace dg_io{
 
 	const bool io = true;
 
-	const int output_frequency = 5000;
+	const int output_frequency = 10000;
 };
 
 

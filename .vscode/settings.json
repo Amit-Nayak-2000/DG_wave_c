@@ -60,6 +60,10 @@
         "*.tcc": "cpp",
         "iterator": "cpp",
         "memory_resource": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "complex": "cpp",
+        "__nullptr": "cpp",
+        "chrono": "cpp",
+        "functional": "cpp"
     }
 }

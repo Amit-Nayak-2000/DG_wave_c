@@ -14,7 +14,7 @@
 /// eigenvalues of the derivative matrix. 
 /// @param tn current time
 /// @param delta_t time step size
-void DG_step_by_RK3(double tn, double delta_t){
+void DG_step_by_RK3(double tn, double delta_t, double wallpos, double wallvel){
 
 	static const double am[3]{0.0, -5.0/9.0, -153.0/128.0};
 	static const double bm[3]{0.0, 1.0/3.0, 3.0/4.0};
@@ -35,7 +35,7 @@ void DG_step_by_RK3(double tn, double delta_t){
 		temp = temp -> next;
 	}
 
-	double phi, beta,  eta, IB;
+	double phi, beta,  eta, IB, xcoord, ycoord;
 	
 	// thrid order RK
 	for(int k = 0; k < 3; ++k){
@@ -62,16 +62,10 @@ void DG_step_by_RK3(double tn, double delta_t){
 
 						//Brinkman volume penalization (Naively speaking setting u and v close to 0)
 						if(l > 0){
-							phi = 1.0;
-							beta = 0.0000001;
-							eta = phi*phi*beta*beta;
-
-							if (std::sqrt(pow(temp->holdmetrics.x_node[nodei], 2) + pow(temp->holdmetrics.y_node[nodei], 2))  <= 0.5){
-								IB = 1.0;
-							}
-							else{
-								IB = 0.0;
-							}
+							// phi = 1.0;
+							// beta = 0.001;
+							eta = 1e-06;
+							
 							// if (temp->holdmetrics.y_node[nodei] <= -0.8){ //wall at 0.5
 							// 	if(temp->holdmetrics.x_node[nodei] <= -0.8 && temp->holdmetrics.x_node[nodei] >= -1){
 							// 		IB = 1.0;
@@ -95,6 +89,36 @@ void DG_step_by_RK3(double tn, double delta_t){
 							// else{
 							// 	IB = 0.0;
 							// }
+
+							// if(l == 1){ // Moving Wall Attempt
+							// 	(temp -> solution)[l][nodei] += ((gm[k] * delta_t * (temp -> G[l][nodei])) + IB*delta_t*wallvel/eta)/(1+ IB*delta_t/eta);
+							// }
+							// else{
+							// 	(temp -> solution)[l][nodei] += (gm[k] * delta_t * (temp -> G[l][nodei]))/(1+ IB*delta_t/eta);
+							// }
+							 
+
+							xcoord = temp->holdmetrics.x_node[nodei];
+							// ycoord = temp->holdmetrics.y_node[nodei];
+							//Triangle
+							// if(xcoord <= 0.2 && xcoord >= 0.0 && ycoord >= -xcoord/2 && ycoord <= xcoord/2){
+							// 	IB = 1.0;
+							// }
+							// else{
+							// 	IB = 0.0;
+							// }
+
+							if(xcoord >= 0.0){
+								IB = 1.0;
+							}
+							else{
+								IB = 0.0;
+							}
+
+							
+
+
+
 
 
 							(temp -> solution)[l][nodei] += (gm[k] * delta_t * (temp -> G[l][nodei]))/(1+ IB*delta_t/eta);
