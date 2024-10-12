@@ -62,24 +62,25 @@ void DG_step_by_RK3(double tn, double delta_t, double wallpos, double wallvel){
 
 						//Brinkman volume penalization (Naively speaking setting u and v close to 0)
 						if(l > 0){
-							// phi = 1.0;
-							// beta = 0.001;
-							eta = 1e-06;
+							eta = 1e-04;
+							xcoord = temp->holdmetrics.x_node[nodei];
+							ycoord = temp->holdmetrics.y_node[nodei];
 							
-							// if (temp->holdmetrics.y_node[nodei] <= -0.8){ //wall at 0.5
-							// 	if(temp->holdmetrics.x_node[nodei] <= -0.8 && temp->holdmetrics.x_node[nodei] >= -1){
+							// Bumpy Wall Masking Function
+							// if (ycoord <= -0.8){ //wall at 0.5
+							// 	if(xcoord <= -0.8 && xcoord >= -1){
 							// 		IB = 1.0;
 							// 	}
-							// 	else if (temp->holdmetrics.x_node[nodei] <= -0.4 && temp->holdmetrics.x_node[nodei] >= -0.6){
+							// 	else if (xcoord <= -0.4 && xcoord >= -0.6){
 							// 		IB = 1.0;
 							// 	}
-							// 	else if (temp->holdmetrics.x_node[nodei] <= 0 && temp->holdmetrics.x_node[nodei] >= -0.2){
+							// 	else if (xcoord <= 0 && xcoord >= -0.2){
 							// 		IB = 1.0;
 							// 	}
-							// 	else if (temp->holdmetrics.x_node[nodei] <= 0.4 && temp->holdmetrics.x_node[nodei] >= 0.2){
+							// 	else if (xcoord <= 0.4 && xcoord >= 0.2){
 							// 		IB = 1.0;
 							// 	}
-							// 	else if (temp->holdmetrics.x_node[nodei] <= 0.8 && temp->holdmetrics.x_node[nodei] >= 0.6){
+							// 	else if (xcoord <= 0.8 && xcoord >= 0.6){
 							// 		IB = 1.0;
 							// 	}
 							// 	else{
@@ -90,30 +91,22 @@ void DG_step_by_RK3(double tn, double delta_t, double wallpos, double wallvel){
 							// 	IB = 0.0;
 							// }
 
-							// if(l == 1){ // Moving Wall Attempt
-							// 	(temp -> solution)[l][nodei] += ((gm[k] * delta_t * (temp -> G[l][nodei])) + IB*delta_t*wallvel/eta)/(1+ IB*delta_t/eta);
-							// }
-							// else{
-							// 	(temp -> solution)[l][nodei] += (gm[k] * delta_t * (temp -> G[l][nodei]))/(1+ IB*delta_t/eta);
-							// }
-							 
 
-							xcoord = temp->holdmetrics.x_node[nodei];
-							// ycoord = temp->holdmetrics.y_node[nodei];
-							//Triangle
-							// if(xcoord <= 0.2 && xcoord >= 0.0 && ycoord >= -xcoord/2 && ycoord <= xcoord/2){
-							// 	IB = 1.0;
-							// }
-							// else{
-							// 	IB = 0.0;
-							// }
-
-							if(xcoord >= 0.0){
+							//Half Circle Masking Function
+							if(std::sqrt( std::pow(xcoord, 2) + std::pow(ycoord, 2) ) <= 0.5){
 								IB = 1.0;
 							}
 							else{
 								IB = 0.0;
 							}
+
+							// Flat Wall Masking Function
+							// if(xcoord >= 0.0){
+							// 	IB = 1.0;
+							// }
+							// else{
+							// 	IB = 0.0;
+							// }
 
 							
 

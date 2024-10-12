@@ -40,10 +40,10 @@ namespace grid{
 	const double gy_l = 0.0;
 	const double gy_r = 1.0; 
 
-	const int nmin = 5;	
-	const int nmax = 17;
+	const int nmin = 4;	
+	const int nmax = 8;
 
-	const int hlevel_max = 1;	
+	const int hlevel_max = 2;	
 };
 //---------------------------------------------------------------------
 
@@ -59,8 +59,8 @@ namespace dg_time{
 	//wave
 	// const double t_total = 1.0e-2* 5;
 	// const int nt = 5000;
-	const double t_total = 0.5;
-	const int nt = 10000;
+	// const double t_total = 0.5;
+	// const int nt = 10000;
 
 
 	//curved channel
@@ -68,8 +68,8 @@ namespace dg_time{
 	// const int nt = 200000;
 
 	// //acoustic scatter time
-	// const double t_total = 3;
-	// const int nt = 60000;
+	const double t_total = 3;
+	const int nt = 60000;
 
 	// //acoustic NASA scatter time
 	// const double t_total = 10;
@@ -103,7 +103,7 @@ namespace dg_refine{
 
 	const bool adapt = false;
 
-	const int refine_frequency = 1;	// every time step refine once
+	const int refine_frequency = 1000;	// every time step refine once
 
 	const int fit_point_num = 4;
 
@@ -125,7 +125,7 @@ namespace dg_io{
 
 	const bool io = true;
 
-	const int output_frequency = 10000;
+	const int output_frequency = 60000;
 };
 
 
