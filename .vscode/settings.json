@@ -64,6 +64,10 @@
         "complex": "cpp",
         "__nullptr": "cpp",
         "chrono": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "fstream": "cpp",
+        "iomanip": "cpp",
+        "sstream": "cpp",
+        "random": "cpp"
     }
 }

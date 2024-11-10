@@ -2,6 +2,7 @@
 #define DG_PARAM_H
 
 #include <string>
+#include <vector>
 
 // mesh file----------------------------------------
 namespace fileinfo{
@@ -82,6 +83,12 @@ namespace mpi{
 	extern int num_proc;
 };
 //---------------------------------------------------
+
+// Immersed Boundary Variables-----------------------
+namespace dg_IB{
+	bool IBmask(double& xcoord, double& ycoord);
+	bool IBelement(std::vector<double>& xcoord, std::vector<double>& ycoord, int p);
+};
 
 
 #endif

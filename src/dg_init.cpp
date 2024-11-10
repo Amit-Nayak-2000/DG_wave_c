@@ -206,6 +206,9 @@ void DG_init(){
 
 		double x, y;
 
+		// Determine if inside immersed boundary at all
+		temp -> immersed = dg_IB::IBelement(temp->holdmetrics.x_node, temp->holdmetrics.y_node, grid::nmin);
+
 		//setting initial conditions
 		for(int j = 0; j <= grid::nmin; ++j){
 			

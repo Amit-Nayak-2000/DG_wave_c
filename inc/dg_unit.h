@@ -68,7 +68,8 @@ public:
 
 	bool hrefine = false;	// h-refinemnt 
 	bool prefine = false;	// p-refinemnt 
-	bool coarsen = false; 
+	bool coarsen = false;
+	bool immersed = false; 
 
 	// mortar ---------------------------------------------
 	Mortar mortar;	// mortar struct instance	

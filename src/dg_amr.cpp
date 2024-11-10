@@ -129,6 +129,10 @@ void hpc_refinement(){
 	
 	for(int k = 0; k < local::local_elem_num; ++k){
 
+		if(temp -> immersed){
+			temp -> prefine = false;
+		}
+
 		if(temp -> hrefine){	// h - refine======================================================================
 			
 			increment += 3; 
@@ -196,6 +200,8 @@ void hpc_refinement(){
 				// //local::Hash_elem[new_key] is the ptr I use
 				//Keep the order of the parent element in case it adapted.
 				local::Hash_elem[new_key]->holdmetrics.updateOrder(local::Hash_elem[new_key] -> n);
+				// Check if child is in Immersed Boundary
+				local::Hash_elem[new_key]->immersed = dg_IB::IBelement(local::Hash_elem[new_key]->holdmetrics.x_node, local::Hash_elem[new_key]->holdmetrics.y_node, local::Hash_elem[new_key]->n);
 
 				// faces(here we construct between siblings)
 				Two_siblings(new_key, position);

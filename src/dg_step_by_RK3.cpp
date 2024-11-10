@@ -62,9 +62,17 @@ void DG_step_by_RK3(double tn, double delta_t, double wallpos, double wallvel){
 
 						//Brinkman volume penalization (Naively speaking setting u and v close to 0)
 						if(l > 0){
-							eta = 1e-04;
+							eta = 1e-06;
 							xcoord = temp->holdmetrics.x_node[nodei];
 							ycoord = temp->holdmetrics.y_node[nodei];
+
+							// Masking Function
+							if(dg_IB::IBmask(xcoord, ycoord)){
+								IB = 1.0;
+							}
+							else{
+								IB = 0.0;
+							}
 							
 							// Bumpy Wall Masking Function
 							// if (ycoord <= -0.8){ //wall at 0.5
@@ -92,13 +100,13 @@ void DG_step_by_RK3(double tn, double delta_t, double wallpos, double wallvel){
 							// }
 
 
-							//Half Circle Masking Function
-							if(std::sqrt( std::pow(xcoord, 2) + std::pow(ycoord, 2) ) <= 0.5){
-								IB = 1.0;
-							}
-							else{
-								IB = 0.0;
-							}
+							// Half Circle Masking Function
+							// if(std::sqrt( std::pow(xcoord, 2) + std::pow(ycoord, 2) ) <= 0.5){
+							// 	IB = 1.0;
+							// }
+							// else{
+							// 	IB = 0.0;
+							// }
 
 							// Flat Wall Masking Function
 							// if(xcoord >= 0.0){

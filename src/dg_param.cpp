@@ -1,5 +1,6 @@
 #include <string>
 #include "dg_param.h"
+#include "dg_single_index.h"
 #include <cmath>
 
 //variable you must change--------------------------------------------
@@ -126,6 +127,34 @@ namespace dg_io{
 	const bool io = true;
 
 	const int output_frequency = 60000;
+};
+
+/// @brief 
+/// Immersed Boundary Variables
+/// @param
+namespace dg_IB{
+	bool IBmask(double& xcoord, double& ycoord){
+		// Half Circle
+		return std::sqrt( std::pow(xcoord, 2) + std::pow(ycoord, 2) ) <= 0.5;
+	}
+	bool IBelement(std::vector<double>& xcoord, std::vector<double>& ycoord, int p){
+		bool corner1 = false, corner2 = false, corner3 = false, corner4 = false;
+		int index;
+
+		index = Get_single_index(0, 0, p+1);
+		corner1 = IBmask(xcoord[index], ycoord[index]);
+
+		index = Get_single_index(0, p, p+1);
+		corner2 = IBmask(xcoord[index], ycoord[index]);
+		
+		index = Get_single_index(p, 0, p+1);
+		corner3 = IBmask(xcoord[index], ycoord[index]);
+
+		index = Get_single_index(p, p, p+1);
+		corner4 = IBmask(xcoord[index], ycoord[index]);
+
+		return (corner1 || corner2 || corner3 || corner4);
+	}
 };
 
 
