@@ -70,7 +70,7 @@ namespace dg_time{
 
 	// //acoustic scatter time
 	const double t_total = 3;
-	const int nt = 60000;
+	const int nt = 150000;
 
 	// //acoustic NASA scatter time
 	// const double t_total = 10;
@@ -102,17 +102,17 @@ namespace dg_fun{
 /// @param load_balaning Repartitioning switch. 
 namespace dg_refine{
 
-	const bool adapt = false;
+	const bool adapt = true;
 
-	const int refine_frequency = 1000;	// every time step refine once
+	const int refine_frequency = 50;	// every time step refine once
 
 	const int fit_point_num = 4;
 
-	const double tolerance_min = 1.0e-4; // originally e-6
+	const double tolerance_min = 1.0e-6; // originally e-6
 
-	const double tolerance_max = 1.0e-9;  // originally e-10
+	const double tolerance_max = 1.0e-10;  // originally e-10
 
-	const bool load_balancing = true;
+	const bool load_balancing = false;
 
 };
 
