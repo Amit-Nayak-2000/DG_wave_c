@@ -469,6 +469,8 @@ void Enlarge_hash(std::vector<info_pack>& recv_info, char dir, int num_recv, std
 
 		//mapped geometry class
 		local::Hash_elem[key] -> holdmetrics.updateOrder((*it).n); //allocate
+		// Immersed Boundary
+		local::Hash_elem[key]->immersed = (*it).immersed;
 
 		for(int k = 0; k < 12; k++){
 			switch(k) {
@@ -830,6 +832,8 @@ void Send_pack(std::vector<info_pack>& send_info, std::vector<long long int>::it
 		v.status = local::Hash_elem[*it] -> status;
 
 		v.child_position = local::Hash_elem[*it] -> child_position;
+
+		v.immersed = local::Hash_elem[*it] -> immersed;
 
 		for(int i = 0; i < 2; ++i){
 		

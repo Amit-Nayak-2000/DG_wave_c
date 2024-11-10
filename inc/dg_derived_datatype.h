@@ -74,6 +74,8 @@ struct info_pack{
 
 	double ref_x[2];
 	double ref_y[2];
+
+	bool immersed; 
 };
 
 /// @brief
