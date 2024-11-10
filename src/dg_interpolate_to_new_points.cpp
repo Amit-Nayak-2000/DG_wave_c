@@ -109,18 +109,26 @@ void Solutions_to_children(std::array<long long int, 4>& keys, long long int p_k
 	// c0
 	Two_dir_inter(p_key, c0, T_xl, T_yl, n, m);
 	Two_direc_interp(p_key, c0, T_xl, T_yl, n, m);
+	// Check if child is in Immersed Boundary
+	c0->immersed = dg_IB::IBelement(c0->holdmetrics.x_node, c0->holdmetrics.y_node, c0->n);
 
 	// c1
 	Two_dir_inter(p_key, c1, T_xr, T_yl, n, m);
 	Two_direc_interp(p_key, c1, T_xr, T_yl, n, m);
+	// Check if child is in Immersed Boundary
+	c1->immersed = dg_IB::IBelement(c1->holdmetrics.x_node, c1->holdmetrics.y_node, c1->n);
 
 	// c2
 	Two_dir_inter(p_key, c2, T_xr, T_yr, n, m);
 	Two_direc_interp(p_key, c2, T_xr, T_yr, n, m);
+	// Check if child is in Immersed Boundary
+	c2->immersed = dg_IB::IBelement(c2->holdmetrics.x_node, c2->holdmetrics.y_node, c2->n);
 
 	// c3
 	Two_dir_inter(p_key, c3, T_xl, T_yr, n, m);
 	Two_direc_interp(p_key, c3, T_xl, T_yr, n, m);
+	// Check if child is in Immersed Boundary
+	c3->immersed = dg_IB::IBelement(c3->holdmetrics.x_node, c3->holdmetrics.y_node, c3->n);
 
 	// std::cout << "1st child" << std::endl;
 	// c0->holdmetrics.outputMetrics();
@@ -295,6 +303,9 @@ void Solution_back_to_parent(std::array<long long int, 4>& keys, long long int p
 	//metrics, jacobians, normals, scaling factors of Parent
 	temp->holdmetrics.recalcscalenorms(coarse_B, nodal::gl_points[n]);
 	// ===============================================================================
+
+	// Check if Element is in Immersed Boundary
+	temp->immersed = dg_IB::IBelement(temp->holdmetrics.x_node, temp->holdmetrics.y_node, temp->n);
 
 	// use lagrange interpolation =====================================================
 //	Polynomial_interpolate_matrix(pl, nodal::gl_points[n], Tl);

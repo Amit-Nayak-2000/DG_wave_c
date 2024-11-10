@@ -70,7 +70,7 @@ namespace dg_time{
 
 	// //acoustic scatter time
 	const double t_total = 3;
-	const int nt = 150000;
+	const int nt = 120000;
 
 	// //acoustic NASA scatter time
 	// const double t_total = 10;

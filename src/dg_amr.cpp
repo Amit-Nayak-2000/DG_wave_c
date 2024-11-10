@@ -200,8 +200,8 @@ void hpc_refinement(){
 				// //local::Hash_elem[new_key] is the ptr I use
 				//Keep the order of the parent element in case it adapted.
 				local::Hash_elem[new_key]->holdmetrics.updateOrder(local::Hash_elem[new_key] -> n);
-				// Check if child is in Immersed Boundary
-				local::Hash_elem[new_key]->immersed = dg_IB::IBelement(local::Hash_elem[new_key]->holdmetrics.x_node, local::Hash_elem[new_key]->holdmetrics.y_node, local::Hash_elem[new_key]->n);
+				// // Check if child is in Immersed Boundary in Solutions_to_children
+				// local::Hash_elem[new_key]->immersed = dg_IB::IBelement(local::Hash_elem[new_key]->holdmetrics.x_node, local::Hash_elem[new_key]->holdmetrics.y_node, local::Hash_elem[new_key]->n);
 
 				// faces(here we construct between siblings)
 				Two_siblings(new_key, position);
@@ -330,12 +330,15 @@ void hpc_refinement(){
 							temp = local::Hash_elem[key_p];	// move pointer to the last 
 						
 							k += 3;	// skip other siblings 
-							std::cout << "H COURSE" << std::endl;
+							// std::cout << "H COURSE" << std::endl;
 							// L2 project back to parent 						
 							Solution_back_to_parent(four_keys, key_p);
 	
 							// form the face info + change neighbours faces
 							Form_parent_faces(four_keys, key_p);
+
+							// Check if Element is in Immersed Boundary in Solution_back_to_parent
+							// local::Hash_elem[key_p]->immersed = dg_IB::IBelement(local::Hash_elem[key_p]->holdmetrics.x_node, local::Hash_elem[key_p]->holdmetrics.y_node, local::Hash_elem[key_p]->n);
 	
 							// erase four siblings
 							for(int i = 0; i < 4; ++i){
