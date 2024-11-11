@@ -563,7 +563,8 @@ void Enlarge_hash(std::vector<info_pack>& recv_info, char dir, int num_recv, std
 			}
 		}
 
-	
+		local::Hash_elem[key]->immersed = dg_IB::IBelement(local::Hash_elem[key]->holdmetrics.x_node, local::Hash_elem[key]->holdmetrics.y_node, local::Hash_elem[key]->n);
+
 		if(it != recv_info.begin()){
 			local::Hash_elem[pre_key] -> next = local::Hash_elem[key];
 

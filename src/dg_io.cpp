@@ -78,7 +78,7 @@ void Write_mesh(double t, int pre_elem){
 		myfile.open(filename, std::ios::trunc);	// truncate the old file
 		// myfile << "X,Y,P,U,V,L,PO" << "\n";
 		myfile << "TITLE = \"DG Plot\"" << "\n";
-		myfile << "VARIABLES = \"X\", \"Y\", \"P\", \"U\", \"V\", \"POLYNOMIAL ORDER\"" << "\n";
+		myfile << "VARIABLES = \"X\", \"Y\", \"P\", \"U\", \"V\", \"POLYNOMIAL ORDER\", \"IMMERSED ELEMENTS\"" << "\n";
 		
 	}
 	else{
@@ -170,7 +170,7 @@ void Write_mesh(double t, int pre_elem){
 
 				//output X, Y, P, U, V
 				// myfile << newcoords[0][index] << "," << newcoords[2][index] << "," << fnew[0][index] << "," <<  fnew[1][index] << "," << fnew[2][index] << "," << iel + 1 << "," << temp->n << "\n";
-				myfile << newcoords[0][index] << " " << newcoords[2][index] << " " << fnew[0][index] << " " <<  fnew[1][index] << " " << fnew[2][index] << " " << temp->n <<  "\n";
+				myfile << newcoords[0][index] << " " << newcoords[2][index] << " " << fnew[0][index] << " " <<  fnew[1][index] << " " << fnew[2][index] << " " << temp->n << " " << temp->immersed <<  "\n";
 
 			}
 		}

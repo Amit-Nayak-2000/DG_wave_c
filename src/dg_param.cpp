@@ -126,7 +126,7 @@ namespace dg_io{
 
 	const bool io = true;
 
-	const int output_frequency = 60000;
+	const int output_frequency = 6000;
 };
 
 /// @brief 
