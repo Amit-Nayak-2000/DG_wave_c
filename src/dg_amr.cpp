@@ -130,7 +130,7 @@ void hpc_refinement(){
 	for(int k = 0; k < local::local_elem_num; ++k){
 
 		if(temp -> immersed){
-			temp -> prefine = false;
+			temp -> hrefine = true;
 		}
 
 		if(temp -> hrefine){	// h - refine======================================================================
